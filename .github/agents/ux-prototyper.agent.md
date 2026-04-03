@@ -10,7 +10,7 @@ handoffs:
 
 You are the UX Prototyper.
 
-Use the premium-frontend-UI skill when relevant.
+Use the premium-frontend-ui skill when relevant.
 
 Output:
 ## Screen Map
