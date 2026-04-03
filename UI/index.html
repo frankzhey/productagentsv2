@@ -1,0 +1,1542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Return Pulse Command Center</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap");
+
+    :root {
+      --bg: #091018;
+      --bg-soft: #101a25;
+      --panel: #172433;
+      --panel-2: #1c2b3c;
+      --line: #314355;
+      --text: #edf4fb;
+      --muted: #96aabd;
+      --brand: #52d3ff;
+      --brand-2: #1d77c2;
+      --ok: #2fd1a2;
+      --warn: #ffbf4f;
+      --bad: #ff6874;
+      --radius: 18px;
+      --shadow: 0 22px 56px rgba(0, 0, 0, 0.28);
+      --sidebar: 228px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Noto Sans SC", "Space Grotesk", sans-serif;
+      background:
+        radial-gradient(920px 540px at 0% 0%, rgba(64, 126, 193, 0.28), transparent 48%),
+        radial-gradient(720px 420px at 100% 10%, rgba(173, 119, 44, 0.2), transparent 42%),
+        linear-gradient(180deg, #080d13 0%, #0d141d 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.04;
+      background-image:
+        radial-gradient(#fff 0.55px, transparent 0.55px),
+        radial-gradient(#fff 0.55px, transparent 0.55px);
+      background-size: 4px 4px, 7px 7px;
+      background-position: 0 0, 1px 1px;
+      mix-blend-mode: overlay;
+    }
+
+    .preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #102338, #0d151e);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .preloader.hide {
+      opacity: 0;
+      transform: scale(1.03);
+      pointer-events: none;
+    }
+    .preloader small {
+      display: block;
+      color: var(--brand);
+      letter-spacing: 0.24em;
+      font-family: "Space Grotesk", sans-serif;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+    .preloader h1 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(34px, 7vw, 74px);
+      line-height: 0.92;
+      letter-spacing: 0.04em;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 18px 14px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      background: linear-gradient(180deg, rgba(12, 18, 26, 0.94), rgba(10, 15, 22, 0.84));
+      backdrop-filter: blur(12px);
+    }
+    .brand {
+      padding: 12px 12px 18px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .brand small {
+      display: block;
+      color: var(--brand);
+      letter-spacing: 0.2em;
+      font-size: 11px;
+      font-family: "Space Grotesk", sans-serif;
+      margin-bottom: 8px;
+    }
+    .brand h1 {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 24px;
+      line-height: 0.92;
+    }
+    .brand p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav button {
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 14px;
+      text-align: left;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    }
+    .nav button:hover {
+      transform: translateX(2px);
+      background: rgba(255, 255, 255, 0.02);
+      border-color: rgba(82, 211, 255, 0.22);
+      color: var(--text);
+    }
+    .nav button.active {
+      color: var(--text);
+      border-color: #46657f;
+      background: linear-gradient(135deg, rgba(18, 33, 49, 0.96), rgba(27, 49, 74, 0.96));
+    }
+    .nav strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    .nav span {
+      display: block;
+      font-size: 11px;
+      line-height: 1.45;
+      opacity: 0.86;
+    }
+
+    .sidebar-note {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 18px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .main {
+      padding: 14px 16px 28px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 8px;
+      z-index: 40;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      background: rgba(9, 16, 24, 0.76);
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease;
+    }
+    .topbar.hidden { transform: translateY(-120%); }
+
+    .filters, .top-actions, .state-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .chip, .ghost-btn, .solid-btn, .state-btn {
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+    .chip, .ghost-btn, .state-btn {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #162332;
+      color: var(--text);
+    }
+    .chip:hover, .ghost-btn:hover, .solid-btn:hover, .state-btn:hover {
+      transform: translateY(-1px);
+    }
+    .chip.active {
+      background: linear-gradient(135deg, #d8f4ff, #79ddff);
+      color: #05111a;
+      border-color: transparent;
+    }
+    .solid-btn {
+      border: 0;
+      background: linear-gradient(135deg, var(--brand-2), var(--brand));
+      color: #05111a;
+      font-weight: 700;
+    }
+    .state-btn.active {
+      border-color: #4a6a84;
+      background: #203547;
+    }
+
+    .hero {
+      margin-top: 14px;
+      border-radius: 26px;
+      padding: 22px 22px 20px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background:
+        radial-gradient(430px 220px at 82% 10%, rgba(82, 211, 255, 0.18), transparent 55%),
+        radial-gradient(300px 180px at 12% 100%, rgba(255, 191, 79, 0.12), transparent 55%),
+        linear-gradient(135deg, #162433, #111b27);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -70px;
+      width: 240px;
+      height: 240px;
+      background: linear-gradient(135deg, rgba(82, 211, 255, 0.18), rgba(82, 211, 255, 0));
+      border-radius: 36px;
+      transform: rotate(24deg);
+    }
+    .hero small {
+      position: relative;
+      z-index: 1;
+      display: block;
+      color: var(--brand);
+      letter-spacing: 0.18em;
+      font-size: 11px;
+      font-family: "Space Grotesk", sans-serif;
+      margin-bottom: 10px;
+    }
+    .hero h2 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(32px, 5vw, 74px);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      max-width: 780px;
+    }
+    .hero p {
+      position: relative;
+      z-index: 1;
+      margin: 10px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .hero-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel {
+      display: none;
+      margin-top: 14px;
+      animation: panel-in 0.24s ease;
+    }
+    .panel.active { display: block; }
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      margin: 10px 0 10px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .grid { display: grid; gap: 12px; }
+    .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .two-col { grid-template-columns: 2fr 1fr; }
+    .equal-two { grid-template-columns: 1fr 1fr; }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      padding: 15px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: linear-gradient(180deg, rgba(25, 38, 52, 0.96), rgba(19, 29, 41, 0.96));
+      box-shadow: var(--shadow);
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%);
+      pointer-events: none;
+    }
+
+    .eyebrow { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+    .metric {
+      margin: 0 0 8px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 36px;
+      line-height: 1;
+    }
+    .delta { font-size: 12px; margin-bottom: 8px; }
+    .delta.up { color: var(--bad); }
+    .delta.down { color: var(--ok); }
+    .subnote {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .chart {
+      height: 240px;
+      border-radius: 14px;
+      border: 1px dashed rgba(120, 160, 190, 0.36);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #8ea6ba;
+      font-size: 13px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+    }
+
+    .bars, .list { display: grid; gap: 10px; }
+    .bar-row { display: grid; gap: 8px; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .bar-track {
+      height: 10px;
+      border-radius: 999px;
+      background: #10202c;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--brand-2), var(--brand));
+    }
+
+    .list-item {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.025);
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+    .list-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(82, 211, 255, 0.22);
+    }
+    .list-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: max-content;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+    }
+    .pill.warn { color: #342101; background: #ffd997; border-color: transparent; }
+    .pill.bad { color: #3d0f13; background: #ffb2b8; border-color: transparent; }
+    .pill.ok { color: #07291f; background: #9bf0d5; border-color: transparent; }
+
+    .matrix {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .matrix div {
+      min-height: 64px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      color: #05111a;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .matrix .low { background: #1a2a37; color: var(--muted); }
+    .matrix .med { background: #29526a; color: #def6ff; }
+    .matrix .high { background: #4fd4ff; }
+    .matrix .hot { background: #ffbf4f; color: #291702; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    table {
+      width: 100%;
+      min-width: 1240px;
+      border-collapse: collapse;
+      background: #12202d;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      text-align: left;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #152434;
+      color: #c7d7e7;
+      font-weight: 600;
+    }
+    td { color: #dce8f4; }
+
+    .drawer-backdrop, .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: rgba(3, 7, 10, 0.52);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .drawer-backdrop.show, .modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: -460px;
+      width: min(92vw, 460px);
+      height: 100vh;
+      z-index: 80;
+      overflow: auto;
+      padding: 18px;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      background: radial-gradient(380px 180px at 100% 0%, rgba(82, 211, 255, 0.14), transparent 55%), linear-gradient(180deg, #152332, #101925);
+      box-shadow: var(--shadow);
+      transition: right 0.28s ease;
+    }
+    .drawer.show { right: 0; }
+
+    .drawer-head, .modal-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .drawer-head h3, .modal-head h3 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+    .drawer-head p, .modal-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #15202d;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(92vw, 760px);
+      max-height: 84vh;
+      overflow: auto;
+      z-index: 90;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -42%);
+      border-radius: 22px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: radial-gradient(280px 120px at 100% 0%, rgba(82, 211, 255, 0.16), transparent 55%), linear-gradient(180deg, #162534, #101925);
+      box-shadow: var(--shadow);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .modal.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+    }
+    .glossary {
+      display: grid;
+      gap: 10px;
+    }
+    .glossary-item {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .glossary-item strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .glossary-item div {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .state-skeleton, .state-empty, .state-error {
+      display: none;
+      min-height: 180px;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      color: var(--muted);
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+    }
+
+    .hidden-state .metric,
+    .hidden-state .delta,
+    .hidden-state .bars,
+    .hidden-state .list,
+    .hidden-state .matrix,
+    .hidden-state .table-wrap,
+    .hidden-state .chart,
+    .hidden-state .legend,
+    .hidden-state .subnote {
+      display: none !important;
+    }
+
+    .loading .state-skeleton,
+    .empty .state-empty,
+    .error .state-error {
+      display: flex !important;
+    }
+    .loading .card::after {
+      content: "";
+      position: absolute;
+      inset: -40% -20%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+      animation: shimmer 1.3s linear infinite;
+    }
+    @keyframes shimmer {
+      from { transform: translateX(-60%); }
+      to { transform: translateX(60%); }
+    }
+
+    .foot {
+      margin-top: 18px;
+      padding: 14px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 1120px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .sidebar-note {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin-top: 14px;
+      }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two-col, .equal-two { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .main { padding: 12px; }
+      .hero { padding: 18px; }
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .top-actions { justify-content: flex-start; }
+      .kpi-grid { grid-template-columns: 1fr; }
+      .matrix { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preloader" id="preloader">
+    <div>
+      <small>REVERSE LOGISTICS</small>
+      <h1>RETURN<br/>PULSE</h1>
+    </div>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+
+  <aside class="drawer" id="alertDrawer">
+    <div class="drawer-head">
+      <div>
+        <h3 id="drawerTitle">异常下钻</h3>
+        <p id="drawerSubtitle">查看异常对象、影响范围与建议动作</p>
+      </div>
+      <button class="close-btn" id="closeDrawer" aria-label="关闭">×</button>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="eyebrow">异常对象</div>
+        <div class="metric" id="drawerEntity">SKU A1023</div>
+        <p class="subnote" id="drawerDesc">描述不符导致退货率 7 天内上升 48%。</p>
+      </div>
+      <div class="card">
+        <div class="eyebrow">影响范围</div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-label"><span>新增退货单</span><span id="drawerOrders">+812</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:72%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>预计净损失</span><span id="drawerLoss">¥31,200</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:64%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">建议动作</div>
+        <div class="list">
+          <div class="list-item">
+            <div class="list-top"><strong>校正商品详情页</strong><span class="pill warn">优先级高</span></div>
+            <div class="subnote">核对尺码、材质、版型与主图承诺。</div>
+          </div>
+          <div class="list-item">
+            <div class="list-top"><strong>检查仓内质检标签</strong><span class="pill">仓配</span></div>
+            <div class="subnote">确认“描述不符”是否被误标为“质量问题”。</div>
+          </div>
+          <div class="list-item">
+            <div class="list-top"><strong>拉明细给运营复盘</strong><span class="pill">运营</span></div>
+            <div class="subnote">查看该 SKU 在直播和货架渠道的退货差异。</div>
+          </div>
+        </div>
+      </div>
+      <button class="solid-btn" id="jumpReason" type="button">跳转到原因分析</button>
+      <button class="ghost-btn" id="jumpDetail" type="button">查看明细表</button>
+    </div>
+  </aside>
+
+  <section class="modal" id="glossaryModal">
+    <div class="modal-head">
+      <div>
+        <h3>指标口径</h3>
+        <p>确保管理层、运营、仓配和财务看到的是同一套定义。</p>
+      </div>
+      <button class="close-btn" id="closeGlossary" aria-label="关闭">×</button>
+    </div>
+    <div class="glossary">
+      <div class="glossary-item">
+        <strong>退货率</strong>
+        <div>定义：已申请退货订单数 / 已签收订单数</div>
+        <div>更新频率：T+1</div>
+        <div>Owner：数据中台 / 售后运营</div>
+      </div>
+      <div class="glossary-item">
+        <strong>退款完成时长</strong>
+        <div>定义：退款完成时间 - 售后申请时间的中位值</div>
+        <div>更新频率：小时级或 T+1</div>
+        <div>Owner：客服运营</div>
+      </div>
+      <div class="glossary-item">
+        <strong>SLA 超时率</strong>
+        <div>定义：超过约定处理时限的售后单数 / 总售后单数</div>
+        <div>更新频率：小时级</div>
+        <div>Owner：逆向流程负责人</div>
+      </div>
+      <div class="glossary-item">
+        <strong>净损失率</strong>
+        <div>定义：(退款金额 + 逆向物流成本 + 质检损耗 - 二次销售回收) / GMV</div>
+        <div>更新频率：T+1</div>
+        <div>Owner：财务分析</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <small>ECOM RETURNS</small>
+        <h1>Return<br/>Pulse</h1>
+        <p>电商退货经营指挥舱。统一看规模、定位原因、识别流程拥塞，并从损益角度给出优先级。</p>
+      </div>
+
+      <nav class="nav">
+        <button class="active" data-page="overview"><strong>总览</strong><span>规模、趋势、异常入口</span></button>
+        <button data-page="reason"><strong>原因分析</strong><span>为什么退，在哪退</span></button>
+        <button data-page="efficiency"><strong>处理效率</strong><span>卡在哪，谁在超时</span></button>
+        <button data-page="cost"><strong>成本损益</strong><span>亏在哪，影响多大</span></button>
+        <button data-page="detail"><strong>明细表</strong><span>订单粒度定位与导出</span></button>
+      </nav>
+
+      <div class="sidebar-note">
+        当前原型包含：5 个页面视图、4 种页面状态、全局筛选联动、异常下钻抽屉、指标口径弹层和明细表。
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar" id="topbar">
+        <div class="filters">
+          <button class="chip active" data-filter="timeRange">近30天</button>
+          <button class="chip" data-filter="site">站点 CN</button>
+          <button class="chip" data-filter="channel">渠道 全部</button>
+          <button class="chip" data-filter="category">品类 服饰</button>
+          <button class="chip" data-filter="merchant">商家 全部</button>
+          <button class="chip" data-filter="warehouse">仓库 华东1仓</button>
+        </div>
+        <div class="top-actions">
+          <div class="state-row">
+            <button class="state-btn active" data-state="normal">Normal</button>
+            <button class="state-btn" data-state="loading">Loading</button>
+            <button class="state-btn" data-state="empty">Empty</button>
+            <button class="state-btn" data-state="error">Error</button>
+          </div>
+          <button class="ghost-btn" id="metricGlossaryBtn" type="button">指标口径</button>
+          <button class="solid-btn" id="openAlert" type="button">打开异常下钻</button>
+        </div>
+      </div>
+
+      <section class="hero">
+        <small>RETURN COMMAND CENTER</small>
+        <h2>See returns before they become margin loss.</h2>
+        <p>面向运营、仓配、客服与财务的退货经营看板。统一监控规模、原因、效率与损益，并支持从告警直接下钻到问题对象。</p>
+        <div class="hero-meta">
+          <span id="heroScope">当前范围：CN / 服饰 / 华东1仓</span>
+          <span>数据更新时间：今天 10:00</span>
+          <span>模式：交互原型</span>
+        </div>
+      </section>
+
+      <section class="panel active" id="overview">
+        <div class="section-head">
+          <div>
+            <h2>总览 Dashboard</h2>
+            <p>5 秒内回答：规模是否失控，效率是否拖慢，损失是否扩大。</p>
+          </div>
+        </div>
+
+        <div class="grid kpi-grid">
+          <article class="card">
+            <div class="eyebrow">退货率</div>
+            <div class="metric metric-return-rate">18.7%</div>
+            <div class="delta up">环比 +2.1%</div>
+            <p class="subnote">对比目标线 16.0%，目前偏高。</p>
+            <div class="state-skeleton">加载中：退货率骨架态</div>
+            <div class="state-empty">当前筛选下暂无退货率数据</div>
+            <div class="state-error">退货率加载失败，请重试</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">退款完成时长</div>
+            <div class="metric metric-refund-time">42h</div>
+            <div class="delta down">环比 -6h</div>
+            <p class="subnote">签收到质检环节仍是主要拖慢点。</p>
+            <div class="state-skeleton">加载中：时效骨架态</div>
+            <div class="state-empty">当前筛选下暂无退款时效数据</div>
+            <div class="state-error">退款时效加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">SLA 超时率</div>
+            <div class="metric metric-sla">9.4%</div>
+            <div class="delta up">环比 +1.2%</div>
+            <p class="subnote">仓内签收至质检完成存在积压。</p>
+            <div class="state-skeleton">加载中：SLA 骨架态</div>
+            <div class="state-empty">当前筛选下暂无 SLA 数据</div>
+            <div class="state-error">SLA 数据拉取失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">净损失率</div>
+            <div class="metric metric-net-loss">3.8%</div>
+            <div class="delta up">环比 +0.6%</div>
+            <p class="subnote">直播活动渠道的退货损失抬升明显。</p>
+            <div class="state-skeleton">加载中：损益骨架态</div>
+            <div class="state-empty">当前筛选下暂无净损失数据</div>
+            <div class="state-error">净损失数据加载失败</div>
+          </article>
+        </div>
+
+        <div class="grid two-col">
+          <article class="card">
+            <div class="eyebrow">退货趋势 + 流程漏斗</div>
+            <div class="chart">趋势图占位<br/>申请 → 审核 → 寄回 → 签收 → 质检 → 退款</div>
+            <div class="legend">
+              <span>近 7 日申请量上升</span>
+              <span>质检转化下降 3.4%</span>
+              <span>退款完成端延迟</span>
+            </div>
+            <div class="state-skeleton">加载中：趋势和漏斗骨架态</div>
+            <div class="state-empty">当前筛选没有趋势数据</div>
+            <div class="state-error">趋势数据异常</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">Top 异常对象</div>
+            <div class="list">
+              <div class="list-item" data-entity="SKU A1023" data-desc="描述不符导致退货率 7 天内上升 48%" data-loss="¥31,200" data-orders="+812">
+                <div class="list-top"><strong>SKU A1023</strong><span class="pill bad">+48%</span></div>
+                <div class="subnote">描述不符异常集中在直播专场。</div>
+              </div>
+              <div class="list-item" data-entity="华东1仓" data-desc="签收到质检时长显著拉长，超时率达到 15%" data-loss="¥18,400" data-orders="+356">
+                <div class="list-top"><strong>华东1仓</strong><span class="pill warn">质检超时</span></div>
+                <div class="subnote">仓内积压导致退款完成时间拉长。</div>
+              </div>
+              <div class="list-item" data-entity="商家 M889" data-desc="连续 7 天超出退货率阈值" data-loss="¥22,100" data-orders="+405">
+                <div class="list-top"><strong>商家 M889</strong><span class="pill warn">连续预警</span></div>
+                <div class="subnote">尺码不合适和材质不符占比偏高。</div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：异常榜单骨架态</div>
+            <div class="state-empty">当前筛选下没有异常对象</div>
+            <div class="state-error">异常榜单加载失败</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="reason">
+        <div class="section-head">
+          <div>
+            <h2>原因分析 Reason Analytics</h2>
+            <p>解释为什么退，帮助你定位品类、商品与渠道层面的根因。</p>
+          </div>
+        </div>
+
+        <div class="grid equal-two">
+          <article class="card">
+            <div class="eyebrow">退货原因分布</div>
+            <div class="bars">
+              <div class="bar-row">
+                <div class="bar-label"><span>尺码不合适</span><span>32%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:32%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>描述不符</span><span>24%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:24%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>质量问题</span><span>18%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:18%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>物流破损</span><span>11%</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:11%"></div></div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：原因分布骨架态</div>
+            <div class="state-empty">无原因分布数据</div>
+            <div class="state-error">原因分布加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">原因趋势</div>
+            <div class="chart">多原因趋势线占位<br/>支持近 7 / 30 / 90 天切换</div>
+            <div class="state-skeleton">加载中：原因趋势骨架态</div>
+            <div class="state-empty">无原因趋势数据</div>
+            <div class="state-error">原因趋势加载失败</div>
+          </article>
+        </div>
+
+        <div class="grid equal-two">
+          <article class="card">
+            <div class="eyebrow">原因 x 品类热力矩阵</div>
+            <div class="matrix">
+              <div class="low">女装 x 尺码</div>
+              <div class="med">女装 x 描述</div>
+              <div class="low">女装 x 质量</div>
+              <div class="med">鞋靴 x 尺码</div>
+              <div class="high">鞋靴 x 描述</div>
+              <div class="low">家居 x 破损</div>
+              <div class="med">家居 x 物流</div>
+              <div class="high">服饰 x 尺码</div>
+              <div class="hot">服饰 x 描述</div>
+              <div class="low">美妆 x 过敏</div>
+            </div>
+            <div class="state-skeleton">加载中：热力矩阵骨架态</div>
+            <div class="state-empty">无热力矩阵数据</div>
+            <div class="state-error">热力矩阵加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">高风险 SKU 列表</div>
+            <div class="list">
+              <div class="list-item" data-entity="SKU A1023" data-desc="直播渠道描述不符高发" data-loss="¥31,200" data-orders="+812">
+                <div class="list-top"><strong>SKU A1023</strong><span class="pill bad">描述不符 41%</span></div>
+                <div class="subnote">主图颜色与实际货品存在偏差。</div>
+              </div>
+              <div class="list-item" data-entity="SKU C8821" data-desc="尺码偏小导致高退货" data-loss="¥14,900" data-orders="+260">
+                <div class="list-top"><strong>SKU C8821</strong><span class="pill warn">尺码不合适 38%</span></div>
+                <div class="subnote">直播推荐尺码与用户反馈不一致。</div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：SKU 列表骨架态</div>
+            <div class="state-empty">无高风险 SKU</div>
+            <div class="state-error">SKU 列表加载失败</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="efficiency">
+        <div class="section-head">
+          <div>
+            <h2>处理效率 Process Efficiency</h2>
+            <p>解释退货流程卡在哪里，帮助优化客服、仓配与质检协同。</p>
+          </div>
+        </div>
+
+        <div class="grid equal-two">
+          <article class="card">
+            <div class="eyebrow">流程阶段时长瀑布</div>
+            <div class="bars">
+              <div class="bar-row">
+                <div class="bar-label"><span>申请 → 审核</span><span>P50 4h / P90 11h</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:22%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>寄回 → 签收</span><span>P50 38h / P90 64h</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:58%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>签收 → 质检</span><span>P50 27h / P90 72h</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:76%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>质检 → 退款完成</span><span>P50 12h / P90 28h</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:42%"></div></div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：时长瀑布骨架态</div>
+            <div class="state-empty">无流程时长数据</div>
+            <div class="state-error">流程时长加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">SLA 健康度</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top"><strong>审核环节</strong><span class="pill ok">94%</span></div>
+                <div class="subnote">客服处理稳定，暂无显著波动。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top"><strong>签收环节</strong><span class="pill warn">88%</span></div>
+                <div class="subnote">逆向物流节点延迟，受地区差异影响明显。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top"><strong>质检环节</strong><span class="pill bad">81%</span></div>
+                <div class="subnote">华东仓积压最明显，优先排查班次与容量。</div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：SLA 骨架态</div>
+            <div class="state-empty">无 SLA 健康度数据</div>
+            <div class="state-error">SLA 健康度加载失败</div>
+          </article>
+        </div>
+
+        <div class="grid two-col">
+          <article class="card">
+            <div class="eyebrow">超时分布</div>
+            <div class="chart">超时分布图占位<br/>支持按仓库、客服组、渠道拆分</div>
+            <div class="state-skeleton">加载中：超时分布骨架态</div>
+            <div class="state-empty">无超时分布数据</div>
+            <div class="state-error">超时分布加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">仓库 / 客服效率对比</div>
+            <div class="chart">效率散点图占位<br/>横轴时长，纵轴超时率</div>
+            <div class="state-skeleton">加载中：效率对比骨架态</div>
+            <div class="state-empty">无效率对比数据</div>
+            <div class="state-error">效率对比加载失败</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="cost">
+        <div class="section-head">
+          <div>
+            <h2>成本损益 Cost Impact</h2>
+            <p>从资金回收视角评估退货的真实影响，避免只看退款金额。</p>
+          </div>
+        </div>
+
+        <div class="grid equal-two">
+          <article class="card">
+            <div class="eyebrow">成本拆解</div>
+            <div class="bars">
+              <div class="bar-row">
+                <div class="bar-label"><span>退款金额</span><span>¥480,000</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:82%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>逆向物流成本</span><span>¥96,000</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:30%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>质检损耗</span><span>¥54,000</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:18%"></div></div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-label"><span>二次销售回收</span><span>¥128,000</span></div>
+                <div class="bar-track"><div class="bar-fill" style="width:26%"></div></div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：成本拆解骨架态</div>
+            <div class="state-empty">无成本拆解数据</div>
+            <div class="state-error">成本拆解加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">高损失对象榜</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top"><strong>SKU B3009</strong><span class="pill bad">¥31,200</span></div>
+                <div class="subnote">描述不符与低二销回收共同推高损失。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top"><strong>商家 M2052</strong><span class="pill warn">¥28,900</span></div>
+                <div class="subnote">直播活动带来短期退货峰值。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top"><strong>区域 华南</strong><span class="pill">¥19,400</span></div>
+                <div class="subnote">逆向物流成本显著高于其他区域。</div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：损失榜单骨架态</div>
+            <div class="state-empty">无高损失对象</div>
+            <div class="state-error">损失榜单加载失败</div>
+          </article>
+        </div>
+
+        <div class="grid two-col">
+          <article class="card">
+            <div class="eyebrow">每万单退货损失趋势</div>
+            <div class="chart">趋势图占位<br/>支持站点 / 品类 / 渠道切换</div>
+            <div class="state-skeleton">加载中：损失趋势骨架态</div>
+            <div class="state-empty">无趋势数据</div>
+            <div class="state-error">损失趋势加载失败</div>
+          </article>
+
+          <article class="card">
+            <div class="eyebrow">经营提示</div>
+            <div class="list">
+              <div class="list-item">
+                <div class="list-top"><strong>损失集中在直播渠道</strong><span class="pill bad">高风险</span></div>
+                <div class="subnote">建议优先复盘脚本承诺、尺码引导与商品详情页一致性。</div>
+              </div>
+              <div class="list-item">
+                <div class="list-top"><strong>二次销售率低于目标</strong><span class="pill warn">可优化</span></div>
+                <div class="subnote">需要复核入库判级与翻新标准。</div>
+              </div>
+            </div>
+            <div class="state-skeleton">加载中：经营提示骨架态</div>
+            <div class="state-empty">当前无经营提示</div>
+            <div class="state-error">经营提示加载失败</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="detail">
+        <div class="section-head">
+          <div>
+            <h2>明细表 Detail</h2>
+            <p>支持按订单粒度定位异常，联动导出与责任分派。</p>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-btn" type="button" id="mockExport">导出 CSV</button>
+            <button class="solid-btn" type="button" id="mockAssign">批量分派</button>
+          </div>
+        </div>
+
+        <article class="card">
+          <div class="eyebrow">表格列定义</div>
+          <div class="legend">
+            <span>订单号</span>
+            <span>售后单号</span>
+            <span>申请时间</span>
+            <span>退款完成时间</span>
+            <span>站点</span>
+            <span>渠道</span>
+            <span>品类</span>
+            <span>SKU</span>
+            <span>商家</span>
+            <span>仓库</span>
+            <span>原因一级 / 二级</span>
+            <span>退款金额</span>
+            <span>逆向物流成本</span>
+            <span>净损失</span>
+            <span>当前环节</span>
+            <span>SLA 是否超时</span>
+            <span>风险等级</span>
+            <span>责任团队</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>售后单号</th>
+                  <th>申请时间</th>
+                  <th>退款完成</th>
+                  <th>站点</th>
+                  <th>渠道</th>
+                  <th>品类</th>
+                  <th>SKU</th>
+                  <th>商家</th>
+                  <th>仓库</th>
+                  <th>原因一级</th>
+                  <th>原因二级</th>
+                  <th>退款金额</th>
+                  <th>逆向物流</th>
+                  <th>净损失</th>
+                  <th>当前环节</th>
+                  <th>SLA</th>
+                  <th>风险等级</th>
+                  <th>责任团队</th>
+                </tr>
+              </thead>
+              <tbody id="detailTableBody">
+                <tr>
+                  <td>O202604010091</td>
+                  <td>R20260401021</td>
+                  <td>2026-04-01 09:31</td>
+                  <td>2026-04-03 14:20</td>
+                  <td>CN</td>
+                  <td>直播</td>
+                  <td>服饰</td>
+                  <td>A1023</td>
+                  <td>M889</td>
+                  <td>华东1仓</td>
+                  <td>描述不符</td>
+                  <td>颜色偏差</td>
+                  <td>¥329</td>
+                  <td>¥18</td>
+                  <td>¥221</td>
+                  <td>质检完成</td>
+                  <td>超时</td>
+                  <td>高</td>
+                  <td>商品运营</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="state-skeleton">加载中：明细表骨架态</div>
+          <div class="state-empty">当前筛选无明细记录</div>
+          <div class="state-error">明细数据加载失败，请重试</div>
+        </article>
+      </section>
+
+      <div class="foot">验证建议：切换页面、点击筛选 chip、切换 Normal / Loading / Empty / Error、打开异常下钻、打开指标口径、点击导出和分派按钮。</div>
+    </main>
+  </div>
+
+  <script>
+    const appState = {
+      activePage: "overview",
+      viewState: "normal",
+      filters: {
+        timeRange: "近30天",
+        site: "CN",
+        channel: "全部",
+        category: "服饰",
+        merchant: "全部",
+        warehouse: "华东1仓"
+      }
+    };
+
+    const filterOptions = {
+      timeRange: ["近7天", "近30天", "近90天"],
+      site: ["CN", "SEA", "EU"],
+      channelBySite: {
+        CN: ["全部", "直播", "货架", "分销"],
+        SEA: ["全部", "电商平台", "直播", "门店"],
+        EU: ["全部", "官网", "平台", "Affiliate"]
+      },
+      warehouseBySite: {
+        CN: ["华东1仓", "华南2仓", "华北3仓"],
+        SEA: ["SG Hub", "MY Hub"],
+        EU: ["DE Hub", "NL Hub"]
+      },
+      category: ["服饰", "鞋靴", "家居", "美妆"],
+      merchant: ["全部", "M889", "M2052", "M3104"]
+    };
+
+    const metricByCategory = {
+      "服饰": { returnRate: "18.7%", refundTime: "42h", sla: "9.4%", netLoss: "3.8%" },
+      "鞋靴": { returnRate: "16.1%", refundTime: "39h", sla: "8.1%", netLoss: "3.2%" },
+      "家居": { returnRate: "11.8%", refundTime: "47h", sla: "10.6%", netLoss: "2.9%" },
+      "美妆": { returnRate: "8.6%", refundTime: "31h", sla: "5.3%", netLoss: "1.7%" }
+    };
+
+    const navBtns = document.querySelectorAll(".nav button");
+    const panels = document.querySelectorAll(".panel");
+    const chips = document.querySelectorAll(".chip");
+    const stateBtns = document.querySelectorAll(".state-btn");
+    const cards = document.querySelectorAll(".card");
+    const topbar = document.getElementById("topbar");
+    const drawer = document.getElementById("alertDrawer");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const modal = document.getElementById("glossaryModal");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const heroScope = document.getElementById("heroScope");
+
+    const metricReturnRate = document.querySelector(".metric-return-rate");
+    const metricRefundTime = document.querySelector(".metric-refund-time");
+    const metricSla = document.querySelector(".metric-sla");
+    const metricNetLoss = document.querySelector(".metric-net-loss");
+
+    let lastY = 0;
+
+    function showPage(pageId) {
+      appState.activePage = pageId;
+      panels.forEach(panel => panel.classList.toggle("active", panel.id === pageId));
+      navBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.page === pageId));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function setViewState(mode) {
+      appState.viewState = mode;
+      stateBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.state === mode));
+
+      cards.forEach(card => {
+        card.classList.remove("loading", "empty", "error", "hidden-state");
+        if (mode === "loading") card.classList.add("loading", "hidden-state");
+        if (mode === "empty") card.classList.add("empty", "hidden-state");
+        if (mode === "error") card.classList.add("error", "hidden-state");
+      });
+    }
+
+    function updateFilterChipText(chip, key, value) {
+      if (key === "site") chip.textContent = "站点 " + value;
+      else if (key === "channel") chip.textContent = "渠道 " + value;
+      else if (key === "category") chip.textContent = "品类 " + value;
+      else if (key === "merchant") chip.textContent = "商家 " + value;
+      else if (key === "warehouse") chip.textContent = "仓库 " + value;
+      else chip.textContent = value;
+    }
+
+    function updateFilterChips() {
+      chips.forEach(chip => {
+        const key = chip.dataset.filter;
+        updateFilterChipText(chip, key, appState.filters[key]);
+      });
+    }
+
+    function updateHeroScope() {
+      heroScope.textContent = "当前范围：" + appState.filters.site + " / " + appState.filters.category + " / " + appState.filters.warehouse;
+    }
+
+    function updateMetrics() {
+      const metricSet = metricByCategory[appState.filters.category];
+      metricReturnRate.textContent = metricSet.returnRate;
+      metricRefundTime.textContent = metricSet.refundTime;
+      metricSla.textContent = metricSet.sla;
+      metricNetLoss.textContent = metricSet.netLoss;
+    }
+
+    function updateDetailRows() {
+      const body = document.getElementById("detailTableBody");
+      const site = appState.filters.site;
+      const category = appState.filters.category;
+      const channel = appState.filters.channel;
+      const merchant = appState.filters.merchant === "全部" ? "M889" : appState.filters.merchant;
+      const warehouse = appState.filters.warehouse;
+
+      body.innerHTML = `
+        <tr>
+          <td>O202604010091</td>
+          <td>R20260401021</td>
+          <td>2026-04-01 09:31</td>
+          <td>2026-04-03 14:20</td>
+          <td>${site}</td>
+          <td>${channel}</td>
+          <td>${category}</td>
+          <td>A1023</td>
+          <td>${merchant}</td>
+          <td>${warehouse}</td>
+          <td>描述不符</td>
+          <td>颜色偏差</td>
+          <td>¥329</td>
+          <td>¥18</td>
+          <td>¥221</td>
+          <td>质检完成</td>
+          <td>超时</td>
+          <td>高</td>
+          <td>商品运营</td>
+        </tr>
+        <tr>
+          <td>O202604010305</td>
+          <td>R20260401086</td>
+          <td>2026-04-01 11:08</td>
+          <td>2026-04-02 19:40</td>
+          <td>${site}</td>
+          <td>${channel}</td>
+          <td>${category}</td>
+          <td>C8821</td>
+          <td>${merchant}</td>
+          <td>${warehouse}</td>
+          <td>尺码不合适</td>
+          <td>偏小</td>
+          <td>¥459</td>
+          <td>¥20</td>
+          <td>¥260</td>
+          <td>退款完成</td>
+          <td>正常</td>
+          <td>中</td>
+          <td>品类运营</td>
+        </tr>
+      `;
+    }
+
+    function rotateFilter(key) {
+      let options;
+      if (key === "channel") {
+        options = filterOptions.channelBySite[appState.filters.site];
+      } else if (key === "warehouse") {
+        options = filterOptions.warehouseBySite[appState.filters.site];
+      } else {
+        options = filterOptions[key];
+      }
+
+      const current = appState.filters[key];
+      const currentIndex = options.indexOf(current);
+      const nextValue = options[(currentIndex + 1) % options.length];
+      appState.filters[key] = nextValue;
+
+      if (key === "site") {
+        appState.filters.channel = filterOptions.channelBySite[nextValue][0];
+        appState.filters.warehouse = filterOptions.warehouseBySite[nextValue][0];
+      }
+
+      updateFilterChips();
+      updateHeroScope();
+      updateMetrics();
+      updateDetailRows();
+    }
+
+    function openDrawer(data) {
+      document.getElementById("drawerEntity").textContent = data.entity;
+      document.getElementById("drawerDesc").textContent = data.desc;
+      document.getElementById("drawerLoss").textContent = data.loss;
+      document.getElementById("drawerOrders").textContent = data.orders;
+      document.getElementById("drawerTitle").textContent = data.entity + " 异常下钻";
+      drawer.classList.add("show");
+      drawerBackdrop.classList.add("show");
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove("show");
+      drawerBackdrop.classList.remove("show");
+    }
+
+    function openGlossary() {
+      modal.classList.add("show");
+      modalBackdrop.classList.add("show");
+    }
+
+    function closeGlossary() {
+      modal.classList.remove("show");
+      modalBackdrop.classList.remove("show");
+    }
+
+    navBtns.forEach(btn => {
+      btn.addEventListener("click", () => showPage(btn.dataset.page));
+    });
+
+    chips.forEach(chip => {
+      chip.addEventListener("click", () => rotateFilter(chip.dataset.filter));
+    });
+
+    stateBtns.forEach(btn => {
+      btn.addEventListener("click", () => setViewState(btn.dataset.state));
+    });
+
+    document.querySelectorAll(".list-item[data-entity]").forEach(item => {
+      item.addEventListener("click", () => {
+        openDrawer({
+          entity: item.dataset.entity,
+          desc: item.dataset.desc,
+          loss: item.dataset.loss,
+          orders: item.dataset.orders
+        });
+      });
+    });
+
+    document.getElementById("openAlert").addEventListener("click", () => {
+      openDrawer({
+        entity: "SKU A1023",
+        desc: "描述不符导致退货率 7 天内上升 48%。",
+        loss: "¥31,200",
+        orders: "+812"
+      });
+    });
+
+    document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+    drawerBackdrop.addEventListener("click", closeDrawer);
+
+    document.getElementById("metricGlossaryBtn").addEventListener("click", openGlossary);
+    document.getElementById("closeGlossary").addEventListener("click", closeGlossary);
+    modalBackdrop.addEventListener("click", closeGlossary);
+
+    document.getElementById("jumpReason").addEventListener("click", () => {
+      closeDrawer();
+      showPage("reason");
+    });
+    document.getElementById("jumpDetail").addEventListener("click", () => {
+      closeDrawer();
+      showPage("detail");
+    });
+
+    document.getElementById("mockExport").addEventListener("click", () => {
+      alert("导出示意：当前筛选下的退货明细将导出为 CSV。");
+    });
+    document.getElementById("mockAssign").addEventListener("click", () => {
+      alert("分派示意：已将选中异常单分派给对应责任团队。");
+    });
+
+    window.addEventListener("scroll", () => {
+      const currentY = window.scrollY;
+      if (currentY > lastY && currentY > 120) topbar.classList.add("hidden");
+      else topbar.classList.remove("hidden");
+      lastY = currentY;
+    }, { passive: true });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => document.getElementById("preloader").classList.add("hide"), 420);
+    });
+
+    updateFilterChips();
+    updateHeroScope();
+    updateMetrics();
+    updateDetailRows();
+    setViewState("normal");
+  </script>
+</body>
+</html>

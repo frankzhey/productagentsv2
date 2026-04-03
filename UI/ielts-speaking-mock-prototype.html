@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IELTS Speaking Mock Prototype</title>
+  <style>
+    :root {
+      --indigo-dark: #1f2a60;
+      --indigo: #3558a8;
+      --indigo-light: #dfe8ff;
+      --red: #d84c57;
+      --sky: #58a7ff;
+      --white: #ffffff;
+      --bg: #fafafa;
+      --bg-soft: #f6f6f6;
+      --line: #eaeaea;
+      --line-strong: #cfcfcf;
+      --text: #1f2a60;
+      --muted: #667085;
+      --success: #1f9d73;
+      --warning: #b76e00;
+      --danger: #c83d4a;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 18px 48px rgba(31, 42, 96, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Noto Sans SC", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(88, 167, 255, 0.14), transparent 26%),
+        radial-gradient(circle at top right, rgba(216, 76, 87, 0.12), transparent 24%),
+        linear-gradient(180deg, #ffffff 0%, #f6f6f6 100%);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image:
+        radial-gradient(#1f2a60 0.6px, transparent 0.6px),
+        radial-gradient(#1f2a60 0.6px, transparent 0.6px);
+      background-size: 4px 4px, 7px 7px;
+      background-position: 0 0, 1px 1px;
+    }
+
+    .preloader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #eff4ff, #ffffff 48%, #fff1f2);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .preloader.hide {
+      opacity: 0;
+      transform: scale(1.02);
+      pointer-events: none;
+    }
+
+    .preloader-inner {
+      text-align: center;
+    }
+
+    .preloader-label {
+      font-size: 12px;
+      letter-spacing: 0.26em;
+      color: var(--indigo);
+      margin-bottom: 10px;
+    }
+
+    .preloader-title {
+      margin: 0;
+      font-size: clamp(34px, 8vw, 68px);
+      line-height: 0.92;
+      font-weight: 700;
+      color: var(--indigo-dark);
+    }
+
+    .page {
+      width: min(100%, 460px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 16px 14px 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      border: 1px solid rgba(207, 207, 207, 0.8);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 8px;
+      box-shadow: 0 10px 28px rgba(31, 42, 96, 0.08);
+    }
+
+    .nav-tabs,
+    .helper-row,
+    .control-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-tabs {
+      margin-bottom: 8px;
+    }
+
+    .tab,
+    .chip,
+    .ghost-btn,
+    .small-btn,
+    .share-btn,
+    .link-btn {
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+      font-family: inherit;
+    }
+
+    .tab:hover,
+    .chip:hover,
+    .ghost-btn:hover,
+    .small-btn:hover,
+    .share-btn:hover,
+    .link-btn:hover,
+    .primary-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .tab {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .tab.active {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--indigo), var(--sky));
+      color: var(--white);
+    }
+
+    .chip {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .chip.active {
+      color: var(--indigo-dark);
+      border-color: rgba(53, 88, 168, 0.22);
+      background: var(--indigo-light);
+    }
+
+    .hero {
+      margin-top: 14px;
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 85% 18%, rgba(88, 167, 255, 0.28), transparent 30%),
+        linear-gradient(140deg, #ffffff 0%, #eef3ff 60%, #fff4f4 100%);
+      border: 1px solid rgba(207, 207, 207, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -26px;
+      top: -36px;
+      width: 160px;
+      height: 160px;
+      background: linear-gradient(135deg, rgba(88, 167, 255, 0.18), rgba(216, 76, 87, 0.1));
+      border-radius: 36px;
+      transform: rotate(18deg);
+    }
+
+    .hero.ended {
+      background:
+        radial-gradient(circle at 85% 18%, rgba(216, 76, 87, 0.2), transparent 30%),
+        linear-gradient(140deg, #ffffff 0%, #f8eff0 60%, #fff7f7 100%);
+    }
+
+    .hero-kicker {
+      position: relative;
+      z-index: 1;
+      color: var(--red);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      margin-bottom: 10px;
+    }
+
+    .hero-title {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(30px, 8vw, 52px);
+      line-height: 0.94;
+      font-weight: 700;
+    }
+
+    .hero-sub {
+      position: relative;
+      z-index: 1;
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .screen {
+      display: none;
+      animation: fade-up 0.24s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card {
+      margin-top: 12px;
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 32px rgba(31, 42, 96, 0.06);
+    }
+
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 4px;
+      background: #eef5ff;
+      color: var(--indigo-dark);
+      font-size: 12px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(53, 88, 168, 0.12);
+    }
+
+    .status-tag.waiting {
+      background: #fff4e6;
+      color: var(--warning);
+      border-color: rgba(183, 110, 0, 0.16);
+    }
+
+    .status-tag.ended {
+      background: #fff1f2;
+      color: var(--danger);
+      border-color: rgba(200, 61, 74, 0.16);
+    }
+
+    .card-title {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .card-sub {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      height: 56px;
+      border-radius: 8px;
+      border: 0;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .primary-btn {
+      color: var(--white);
+      background: linear-gradient(135deg, var(--indigo-dark), var(--indigo));
+      box-shadow: 0 14px 28px rgba(53, 88, 168, 0.22);
+    }
+
+    .secondary-btn {
+      color: var(--indigo-dark);
+      background: #eef3ff;
+      border: 1px solid rgba(53, 88, 168, 0.16);
+    }
+
+    .primary-btn:disabled,
+    .secondary-btn:disabled,
+    .share-btn:disabled,
+    .ghost-btn:disabled {
+      opacity: 0.56;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .record-box {
+      display: grid;
+      gap: 12px;
+    }
+
+    .question-image {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 18px;
+      border: 1px dashed var(--line-strong);
+      background:
+        linear-gradient(135deg, #eef3ff, #ffffff 40%, #fff5f5),
+        repeating-linear-gradient(-45deg, rgba(53, 88, 168, 0.05) 0 12px, rgba(255, 255, 255, 0) 12px 24px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 18px;
+      color: var(--indigo-dark);
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .question-image small {
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 54px;
+      line-height: 1;
+      font-weight: 700;
+      margin: 4px 0;
+      color: var(--indigo-dark);
+    }
+
+    .record-btn {
+      width: 100%;
+      height: 56px;
+      border-radius: 8px;
+      border: 0;
+      background: linear-gradient(135deg, var(--red), #ff7b84);
+      color: var(--white);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      box-shadow: 0 14px 28px rgba(216, 76, 87, 0.24);
+    }
+
+    .record-btn.recording {
+      background: linear-gradient(135deg, #b5303f, var(--red));
+    }
+
+    .after-actions {
+      display: none;
+      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .small-btn {
+      height: 40px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--white);
+    }
+
+    .small-btn.primary {
+      color: var(--white);
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--indigo-dark), var(--indigo));
+    }
+
+    .waiting-card,
+    .score-card {
+      overflow: hidden;
+    }
+
+    .share-btn {
+      width: 100%;
+      height: 48px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--indigo-dark);
+      background: #eef3ff;
+    }
+
+    .score-visual {
+      position: relative;
+      border-radius: 22px;
+      padding: 18px;
+      color: var(--white);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .score-visual::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -20px;
+      width: 130px;
+      height: 130px;
+      border-radius: 30px;
+      transform: rotate(18deg);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .score-grade {
+      position: relative;
+      z-index: 1;
+      font-size: 64px;
+      line-height: 1;
+      font-weight: 700;
+      margin: 10px 0 0;
+    }
+
+    .score-name,
+    .score-desc {
+      position: relative;
+      z-index: 1;
+    }
+
+    .score-name {
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      opacity: 0.9;
+    }
+
+    .score-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 92%;
+    }
+
+    .score-theme-a1 {
+      background: linear-gradient(135deg, #687cb9, #91a6e6);
+    }
+
+    .score-theme-a2 {
+      background: linear-gradient(135deg, #3558a8, #58a7ff);
+    }
+
+    .score-theme-b1 {
+      background: linear-gradient(135deg, #4f6bc3, #7ea5ff);
+    }
+
+    .score-theme-b2 {
+      background: linear-gradient(135deg, #1f2a60, #3558a8);
+    }
+
+    .score-theme-c1 {
+      background: linear-gradient(135deg, #6f4d93, #9c7bc3);
+    }
+
+    .score-theme-c2 {
+      background: linear-gradient(135deg, #b23043, #d84c57);
+    }
+
+    .score-copy {
+      margin-top: 12px;
+    }
+
+    .score-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--indigo-dark);
+      margin-top: 10px;
+      font-weight: 700;
+      background: #eef3ff;
+    }
+
+    .meta-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .meta-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--bg-soft);
+    }
+
+    .meta-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .meta-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .helper-panel {
+      margin-top: 12px;
+      border: 1px dashed var(--line-strong);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .helper-title {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .ghost-btn {
+      height: 40px;
+      border-radius: 8px;
+      font-size: 13px;
+      padding: 0 12px;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+      text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .after-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .timer {
+        font-size: 46px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preloader" id="preloader">
+    <div class="preloader-inner">
+      <div class="preloader-label">IELTS SPEAKING MOCK</div>
+      <h1 class="preloader-title">PART 2<br/>VOICE TEST</h1>
+    </div>
+  </div>
+
+  <main class="page">
+    <section class="topbar">
+      <div class="nav-tabs">
+        <button class="tab active" data-screen="main">Main</button>
+        <button class="tab" data-screen="recording">Recording</button>
+        <button class="tab" data-screen="waiting">Waiting</button>
+        <button class="tab" data-screen="score">Score</button>
+      </div>
+      <div class="helper-row" id="filterSummary">
+        <button class="chip active" id="statusChip">状态：未提交</button>
+        <button class="chip" id="campaignChip">活动：进行中</button>
+      </div>
+    </section>
+
+    <section class="screen active" id="main">
+      <section class="hero" id="mainHero">
+        <div class="hero-kicker">MOCK IELTS SPEAKING</div>
+        <h1 class="hero-title">Part 2 口语测评挑战</h1>
+        <p class="hero-sub" id="heroSub">微信授权后即可进入作答，系统将随机抽取 38 套图片题中的 1 套进行录音测评。</p>
+      </section>
+
+      <section class="card">
+        <span class="status-tag" id="mainStatus">状态：未提交</span>
+        <h2 class="card-title">测评规则</h2>
+        <p class="card-sub">
+          每位考生仅可正式提交一次录音。录音总时长 2 分钟，上传文件将与微信用户的 unionId 关联，提交后进入评分等待状态。
+        </p>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <strong>授权方式</strong>
+            <span>进入小程序后进行微信授权，获取用户身份并建立唯一测评记录。</span>
+          </div>
+          <div class="meta-item">
+            <strong>测试次数</strong>
+            <span>每位考生仅有一次正式提交机会，录音页内可重录，但上传后不可再次提交。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">开始入口</h2>
+        <p class="card-sub">两个入口按钮逻辑一致，均根据用户当前状态决定跳转目标或禁用态。</p>
+        <div class="actions">
+          <button class="primary-btn" id="joinBtn">立即参与</button>
+          <button class="secondary-btn" id="startBtn">开始口语测评</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen" id="recording">
+      <section class="card record-box">
+        <span class="status-tag">步骤 1 / 3：阅读题目并录音</span>
+        <h2 class="card-title">随机题目展示区</h2>
+        <div class="question-image" id="questionImage">
+          题图 #01 / 38
+          <small>本原型用占位图模拟图片题，正式接入后替换为题库图片资源。</small>
+        </div>
+        <p class="card-sub">系统从 38 套图片题中随机抽取 1 套。录音前请先阅读题目要求并组织回答。</p>
+      </section>
+
+      <section class="card record-box">
+        <span class="status-tag" id="recordStatus">录音未开始</span>
+        <div class="timer" id="timer">02:00</div>
+        <button class="record-btn" id="recordBtn">开始录音</button>
+        <div class="after-actions" id="afterActions">
+          <button class="small-btn" id="redoBtn">重新录音</button>
+          <button class="small-btn" id="playBtn">播放</button>
+          <button class="small-btn primary" id="uploadBtn">上传录音</button>
+        </div>
+        <p class="card-sub">支持手动结束录音，也支持倒计时结束后自动停止。上传文件格式为 MP3，并与 unionId 绑定保存。</p>
+      </section>
+    </section>
+
+    <section class="screen" id="waiting">
+      <section class="card waiting-card">
+        <span class="status-tag waiting">测评状态：等待评分</span>
+        <h2 class="card-title">评估时间</h2>
+        <p class="card-sub">评估结果通常在 1 周内返回，请耐心等待。成绩回传后，Main 页入口会自动变为“查看结果”。</p>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <strong>当前状态</strong>
+            <span>已完成录音上传，系统已收到文件，正在等待评分服务回传 CEFR 成绩。</span>
+          </div>
+          <div class="meta-item">
+            <strong>用户动作</strong>
+            <span>当前阶段不可再次进入录音提交流程，可分享活动链接给好友或朋友圈。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">分享入口</h2>
+        <p class="card-sub">支持分享本次活动的小程序链接给好友或朋友圈，用于裂变传播。</p>
+        <div class="actions">
+          <button class="share-btn" id="shareBtn">分享给好友 / 朋友圈</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen" id="score">
+      <section class="score-card card">
+        <span class="status-tag">测评状态：已出分</span>
+        <div class="score-visual score-theme-a2" id="scoreVisual">
+          <div class="score-name" id="scoreName">CEFR RESULT</div>
+          <div class="score-grade" id="scoreGrade">A2</div>
+          <div class="score-desc" id="scoreDesc">日常畅聊鸭</div>
+        </div>
+        <div class="score-copy">
+          <a class="link-btn" href="#" id="cefrLink">IELTS and the CEFR</a>
+          <p id="scoreCopy">恭喜解锁日常畅聊鸭！超市点单、餐厅问路都能搞定，日常沟通越来越溜，太能干啦！</p>
+        </div>
+      </section>
+    </section>
+
+    <section class="helper-panel">
+      <p class="helper-title">原型调试控制</p>
+      <div class="control-row">
+        <button class="ghost-btn" id="toggleCampaignBtn">切换活动进行中 / 结束</button>
+        <button class="ghost-btn" id="cycleUserBtn">切换用户状态</button>
+        <button class="ghost-btn" id="randomQuestionBtn">随机题图</button>
+        <button class="ghost-btn" id="randomScoreBtn">随机成绩</button>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      假设：除 A2 外，其余等级文案当前为示意文案，正式上线前需替换为业务最终版本。分享、录音、上传在本原型中以交互模拟为主。
+    </p>
+  </main>
+
+  <script>
+    const scoreThemes = {
+      A1: "score-theme-a1",
+      A2: "score-theme-a2",
+      B1: "score-theme-b1",
+      B2: "score-theme-b2",
+      C1: "score-theme-c1",
+      C2: "score-theme-c2"
+    };
+
+    const copyPool = {
+      A1: [
+        "A1 入门级示意文案：你已经具备最基础的口语表达能力，继续练习会更稳定。",
+        "A1 入门级示意文案：基础开口已经迈出第一步，接下来重点提升完整表达。",
+        "A1 入门级示意文案：日常简单问答已可进行，下一阶段建议强化词汇积累。",
+        "A1 入门级示意文案：你已经建立起口语起点，现在最重要的是持续开口。",
+        "A1 入门级示意文案：继续坚持练习，表达的流畅度会很快提升。"
+      ],
+      A2: [
+        "恭喜解锁日常畅聊鸭！超市点单、餐厅问路都能搞定，日常沟通越来越溜，太能干啦！",
+        "日常畅聊鸭你超牛！能简单描述“昨天去哪玩”，口语表达有画面感，你的进步大家都看到啦！",
+        "看到你成为日常畅聊鸭好惊喜！听懂对话还能及时回应，每一次交流都是成长，继续加油！",
+        "日常畅聊鸭太优秀！基础句型用得超熟练，接下来挑战更复杂表达，你一定没问题！",
+        "为日常畅聊鸭喝彩！从“不敢说”到“能畅聊”，你的努力超值得，未来会更棒！"
+      ],
+      B1: [
+        "B1 进阶级示意文案：你已经能够较完整地表达观点，日常交流更自信了。",
+        "B1 进阶级示意文案：常见话题下的叙述更连贯，继续提升细节描述会更出彩。",
+        "B1 进阶级示意文案：你已具备稳定沟通能力，正在向更成熟表达迈进。",
+        "B1 进阶级示意文案：观点组织越来越清晰，下一步重点是丰富语言层次。",
+        "B1 进阶级示意文案：你已经进入会说、敢说、能展开说的阶段。"
+      ],
+      B2: [
+        "B2 高阶级示意文案：你能够在多数场景下自然表达，逻辑和流畅度表现良好。",
+        "B2 高阶级示意文案：复杂问题下依然能保持连贯表达，已经很接近高分状态。",
+        "B2 高阶级示意文案：你的口语组织能力和语感都在持续增强。",
+        "B2 高阶级示意文案：在观点展开和回应层面，你已经展现出明显优势。",
+        "B2 高阶级示意文案：继续提升表达精确度，你会进一步拉开差距。"
+      ],
+      C1: [
+        "C1 高水平示意文案：你具备高阶口语表达能力，思路与语言都很成熟。",
+        "C1 高水平示意文案：复杂语境下依旧自然流畅，表达层次感已经很强。",
+        "C1 高水平示意文案：你已能较精准地组织论点并给出有说服力的说明。",
+        "C1 高水平示意文案：你的语言掌控力和稳定性表现优秀。",
+        "C1 高水平示意文案：继续打磨细节，已经非常接近顶级表达。"
+      ],
+      C2: [
+        "C2 顶级示意文案：你已展现出极强的语言掌控力，表达自然且精准。",
+        "C2 顶级示意文案：面对高复杂度语境依然从容，这是一种非常稀缺的能力。",
+        "C2 顶级示意文案：你的表达完整、灵活且富有层次，已经接近母语级表现。",
+        "C2 顶级示意文案：在准确度、逻辑和自然度上都达到了很高水平。",
+        "C2 顶级示意文案：这是非常亮眼的口语表现，值得庆祝。"
+      ]
+    };
+
+    const scoreNames = {
+      A1: "STARTER VOICE",
+      A2: "DAILY TALKER",
+      B1: "CLEAR SPEAKER",
+      B2: "CONFIDENT COMMUNICATOR",
+      C1: "ADVANCED EXPRESSION",
+      C2: "EXPERT FLUENCY"
+    };
+
+    const scoreDescMap = {
+      A1: "入门起步中",
+      A2: "日常畅聊鸭",
+      B1: "表达更完整",
+      B2: "交流更自信",
+      C1: "高阶表达者",
+      C2: "接近母语级"
+    };
+
+    const state = {
+      campaignStatus: "active",
+      userStatus: "not_submitted",
+      promptIndex: Math.floor(Math.random() * 38) + 1,
+      recording: false,
+      hasRecording: false,
+      secondsLeft: 120,
+      timerRef: null,
+      scoreLevel: "A2"
+    };
+
+    const tabs = document.querySelectorAll(".tab");
+    const screens = document.querySelectorAll(".screen");
+    const mainHero = document.getElementById("mainHero");
+    const heroSub = document.getElementById("heroSub");
+    const mainStatus = document.getElementById("mainStatus");
+    const statusChip = document.getElementById("statusChip");
+    const campaignChip = document.getElementById("campaignChip");
+    const joinBtn = document.getElementById("joinBtn");
+    const startBtn = document.getElementById("startBtn");
+    const questionImage = document.getElementById("questionImage");
+    const timer = document.getElementById("timer");
+    const recordStatus = document.getElementById("recordStatus");
+    const recordBtn = document.getElementById("recordBtn");
+    const afterActions = document.getElementById("afterActions");
+    const scoreVisual = document.getElementById("scoreVisual");
+    const scoreGrade = document.getElementById("scoreGrade");
+    const scoreName = document.getElementById("scoreName");
+    const scoreDesc = document.getElementById("scoreDesc");
+    const scoreCopy = document.getElementById("scoreCopy");
+
+    function showScreen(id) {
+      screens.forEach(screen => screen.classList.toggle("active", screen.id === id));
+      tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.screen === id));
+    }
+
+    function formatTime(seconds) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const secs = String(seconds % 60).padStart(2, "0");
+      return mins + ":" + secs;
+    }
+
+    function randomPick(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function renderQuestion() {
+      questionImage.innerHTML = "题图 #" + String(state.promptIndex).padStart(2, "0") + " / 38<small>本原型用占位图模拟图片题，正式接入后替换为题库图片资源。</small>";
+    }
+
+    function renderScore() {
+      const level = state.scoreLevel;
+      const copy = randomPick(copyPool[level]);
+      scoreVisual.className = "score-visual " + scoreThemes[level];
+      scoreGrade.textContent = level;
+      scoreName.textContent = scoreNames[level];
+      scoreDesc.textContent = scoreDescMap[level];
+      scoreCopy.textContent = copy;
+    }
+
+    function renderMain() {
+      const isEnded = state.campaignStatus === "ended";
+
+      campaignChip.textContent = isEnded ? "活动：已结束" : "活动：进行中";
+      campaignChip.classList.toggle("active", !isEnded);
+
+      if (isEnded && state.userStatus === "not_submitted") {
+        mainHero.classList.add("ended");
+        heroSub.textContent = "活动已结束，感谢你的关注。本轮 mock IELTS Part 2 口语测评已停止接受新提交。";
+        mainStatus.className = "status-tag ended";
+        mainStatus.textContent = "状态：活动结束";
+        statusChip.textContent = "状态：活动结束";
+        joinBtn.textContent = "谢谢参与，活动结束";
+        startBtn.textContent = "谢谢参与，活动结束";
+        joinBtn.disabled = true;
+        startBtn.disabled = true;
+        return;
+      }
+
+      mainHero.classList.remove("ended");
+      heroSub.textContent = "微信授权后即可进入作答，系统将随机抽取 38 套图片题中的 1 套进行录音测评。";
+
+      if (state.userStatus === "not_submitted") {
+        mainStatus.className = "status-tag";
+        mainStatus.textContent = "状态：未提交";
+        statusChip.textContent = "状态：未提交";
+        joinBtn.textContent = "立即参与";
+        startBtn.textContent = "开始口语测评";
+        joinBtn.disabled = false;
+        startBtn.disabled = false;
+      } else if (state.userStatus === "submitted_pending") {
+        mainStatus.className = "status-tag waiting";
+        mainStatus.textContent = "状态：等待测评结果";
+        statusChip.textContent = "状态：待评分";
+        joinBtn.textContent = "等待测评结果";
+        startBtn.textContent = "等待测评结果";
+        joinBtn.disabled = true;
+        startBtn.disabled = true;
+      } else {
+        mainStatus.className = "status-tag";
+        mainStatus.textContent = "状态：已出分";
+        statusChip.textContent = "状态：已出分";
+        joinBtn.textContent = "查看结果";
+        startBtn.textContent = "查看结果";
+        joinBtn.disabled = false;
+        startBtn.disabled = false;
+      }
+    }
+
+    function routeByStatus() {
+      if (state.campaignStatus === "ended" && state.userStatus === "not_submitted") return;
+
+      if (state.userStatus === "not_submitted") {
+        showScreen("recording");
+      } else if (state.userStatus === "submitted_pending") {
+        showScreen("waiting");
+      } else {
+        showScreen("score");
+      }
+    }
+
+    function stopRecording(autoStop) {
+      if (!state.recording) return;
+      clearInterval(state.timerRef);
+      state.recording = false;
+      state.hasRecording = true;
+      recordBtn.classList.remove("recording");
+      recordBtn.textContent = autoStop ? "录音自动结束" : "录音已结束";
+      recordStatus.className = "status-tag waiting";
+      recordStatus.textContent = autoStop ? "录音结束：已到 2 分钟上限" : "录音结束：用户手动停止";
+      afterActions.style.display = "grid";
+    }
+
+    function resetRecordingState() {
+      clearInterval(state.timerRef);
+      state.recording = false;
+      state.hasRecording = false;
+      state.secondsLeft = 120;
+      timer.textContent = formatTime(state.secondsLeft);
+      recordBtn.textContent = "开始录音";
+      recordBtn.classList.remove("recording");
+      recordStatus.className = "status-tag";
+      recordStatus.textContent = "录音未开始";
+      afterActions.style.display = "none";
+    }
+
+    document.getElementById("toggleCampaignBtn").addEventListener("click", () => {
+      state.campaignStatus = state.campaignStatus === "active" ? "ended" : "active";
+      renderMain();
+    });
+
+    document.getElementById("cycleUserBtn").addEventListener("click", () => {
+      state.userStatus =
+        state.userStatus === "not_submitted" ? "submitted_pending" :
+        state.userStatus === "submitted_pending" ? "scored" :
+        "not_submitted";
+      renderMain();
+    });
+
+    document.getElementById("randomQuestionBtn").addEventListener("click", () => {
+      state.promptIndex = Math.floor(Math.random() * 38) + 1;
+      renderQuestion();
+    });
+
+    document.getElementById("randomScoreBtn").addEventListener("click", () => {
+      const levels = ["A1", "A2", "B1", "B2", "C1", "C2"];
+      state.scoreLevel = randomPick(levels);
+      renderScore();
+    });
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => showScreen(tab.dataset.screen));
+    });
+
+    joinBtn.addEventListener("click", routeByStatus);
+    startBtn.addEventListener("click", routeByStatus);
+
+    recordBtn.addEventListener("click", () => {
+      if (state.recording) {
+        stopRecording(false);
+        return;
+      }
+
+      state.recording = true;
+      state.secondsLeft = 120;
+      timer.textContent = formatTime(state.secondsLeft);
+      recordBtn.classList.add("recording");
+      recordBtn.textContent = "结束录音";
+      recordStatus.className = "status-tag waiting";
+      recordStatus.textContent = "录音中：已调起录音能力";
+      afterActions.style.display = "none";
+
+      state.timerRef = setInterval(() => {
+        state.secondsLeft -= 1;
+        timer.textContent = formatTime(Math.max(state.secondsLeft, 0));
+        if (state.secondsLeft <= 0) stopRecording(true);
+      }, 1000);
+    });
+
+    document.getElementById("redoBtn").addEventListener("click", () => {
+      const yes = window.confirm("重新录音会删除之前的录音内容，是否继续？");
+      if (!yes) return;
+      resetRecordingState();
+    });
+
+    document.getElementById("playBtn").addEventListener("click", () => {
+      window.alert("播放录音示意：正式接入后调用小程序音频播放能力。\n文件格式：MP3");
+    });
+
+    document.getElementById("uploadBtn").addEventListener("click", () => {
+      if (!state.hasRecording) {
+        window.alert("请先完成录音再上传。");
+        return;
+      }
+
+      state.userStatus = "submitted_pending";
+      renderMain();
+      window.alert("上传成功示意：MP3 文件已与微信用户 unionId 绑定保存。");
+      showScreen("waiting");
+    });
+
+    document.getElementById("shareBtn").addEventListener("click", () => {
+      window.alert("分享示意：可将本次活动的小程序链接分享给好友或朋友圈。");
+    });
+
+    document.getElementById("cefrLink").addEventListener("click", event => {
+      event.preventDefault();
+      window.alert("链接示意：IELTS and the CEFR。\n正式接入时可跳转站内说明页或小程序允许的外链能力。");
+    });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => document.getElementById("preloader").classList.add("hide"), 480);
+    });
+
+    renderMain();
+    renderQuestion();
+    renderScore();
+    resetRecordingState();
+  </script>
+</body>
+</html>
