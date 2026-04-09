@@ -1,3 +1,9 @@
+
+
+---
+applyTo: "{UI/**,src/frontend/**,**/*.{ts,tsx,js,jsx,css,scss,html}}"
+---
+
 # BCChina Frontend Instructions
 
 ## 目标

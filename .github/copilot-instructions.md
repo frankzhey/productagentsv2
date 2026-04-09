@@ -1,5 +1,62 @@
 # BCChina Copilot Instructions (Enterprise Version)
 
+## 目的
+本文件定义 BCChina 仓库级的全局 AI 协作规则。  
+所有 Agent、Copilot 输出、文档生成、设计说明、研发评审、代码建议，默认必须先遵守本文件，再叠加相关的局部 instructions 文件。
+
+---
+
+## 指令优先级（强制）
+
+默认优先级如下：
+
+1. 用户当前明确要求
+2. `.github/copilot-instructions.md`（全局规则）
+3. `.github/instructions/*.instructions.md`（局部规则）
+4. `.github/agents/*.agent.md`（角色规则）
+5. skills 内部说明
+
+如果规则冲突，按以上顺序处理。
+
+---
+
+## 适用范围
+
+本文件适用于：
+
+- Product Planner
+- UX Prototyper
+- Eng Reviewer
+- Wiki Publisher
+- Knowledge Retriever
+- 其他自定义 Agent
+- Copilot 生成的 PRD、UX 文档、Engineering Review、HTML Prototype、React 代码、技术方案
+
+---
+
+## 工作方式（强制）
+
+在执行任何任务前，必须先判断：
+
+1. 当前任务属于哪一类：
+   - 产品规划
+   - UX / UI 设计
+   - 工程评审
+   - 代码实现
+   - Wiki 发布
+   - 历史知识检索
+
+2. 当前任务是否命中局部 instructions：
+   - 前端/UI相关 → 读取 `frontend.instructions.md`
+   - 产品文档相关 → 遵守本文件中的 Product Rules
+   - 工程设计相关 → 遵守本文件中的 Engineering Rules
+
+3. 当前任务是否需要参考历史知识：
+   - 在生成 PRD、UX 文档、Engineering Review 前，优先搜索 Azure DevOps Wiki 中最相关的历史页面
+   - 优先参考最近、结构完整、与当前系统或业务最相似的 3–5 个页面
+   - 历史内容仅作为参考，当前需求优先
+
+---
 ## 1. Product Rules (PM)
 
 ### PRD Structure
@@ -14,10 +71,27 @@ PRD must follow a structured format phased by scope:
 ### User Story & Acceptance Criteria
 
 * User stories in “As a … I want … so that …” format
-* Acceptance Criteria (AC) must be in “Given / When / Then” format, with clear pass/fail conditions
-* Each user story ties to a feature and epic hierarchy:
+* User story 必须使用英文，清晰表达用户角色、需求和价值
+* Acceptance Criteria (AC) 必须使用中文，采用 “Given / When / Then” 格式，明确通过/失败条件
+* 每个 user story 必须关联到 feature 和 epic 层级：
+
 
   * Epic → Feature → Story (Jira: Epic, Task, Sub-task)
+
+### PRD output format
+默认输出应尽量包含：
+
+* Feature Summary
+* Epic
+* Feature List
+* User Stories
+* Acceptance Criteria
+* User Flow
+* UI & UX Requirements
+* Non-functional Requirements
+* Tracking & Metrics（如适用）
+* Future Extension Ideas（如适用）
+
 
 ## 2. Engineering Rules (研发)
 
@@ -27,12 +101,49 @@ PRD must follow a structured format phased by scope:
 * 关键系统必须提供组件架构图 (High-level Component Diagram)
 * 使用同步/异步明确，定义队列策略，外部依赖要清晰
 
+### 工程设计输出要求
+
+如任务涉及研发实现评审或技术方案，默认应考虑：
+
+* Sequence diagrams（2–5 个，从系统流程衍生）
+* Database ERD（实体来自 service boundary ownership）
+* API Document
+* 错误处理
+* retry 机制
+* logging / tracing 规范
+
 ### API 规范
 
 * API 文档必备（OpenAPI 格式）
 * 错误处理必须有标准错误码与描述
 * retry 机制：定义可重试接口与最大重试次数
 * 日志规范：日志需包含 trace ID、调用链、错误级别
+* API 方案必须说明：
+- endpoint
+- method
+- request
+- response
+- error model
+- auth / permission（如适用）
+- retry / timeout（如适用）
+### 错误处理规范
+
+* 所有设计必须考虑：
+- 外部依赖失败
+- 超时
+- 幂等性
+- 重试机制
+- 用户可感知反馈
+- 系统日志记录
+### Logging 规范
+
+* 关键业务流程必须明确：
+
+- trace id
+- request id（如适用）
+- service name
+- error level
+- 关键上下文参数
 
 ## 3. Terminology (统一术语)
 
@@ -46,6 +157,13 @@ PRD must follow a structured format phased by scope:
 * Mock: 模拟测试（如口语、写作）
 * Score: 分数或评估结果
 * CEFR: 欧洲语言共同框架（等级）
+
+### 公司背景
+* 公司专注于英语测评产品
+* 核心产品：IELTS
+* 公司当前重点从 TOB 向 TOC / mobile operations 转移
+* Mini program 是重要渠道
+* 3Ups website 是面向客户的重要前台与产品聚合平台
 
 ### 内部系统列表
 
@@ -112,8 +230,64 @@ PRD must follow a structured format phased by scope:
 
 ### React 规范
 
-* 使用 Functional Components
-* Hooks 优先，避免 class
+* 优先使用 Functional Components
+* 优先使用 Hooks
+* 组件职责单一
+* 页面结构清晰
+* 明确 loading / empty / error / success 状态
+* 不要在一个组件中塞入过多业务逻辑
+### 文件结构规范
+src/
+  components/
+  pages/
+  services/
+  hooks/
+  types/
+  utils/
+* 要求：
+
+- 组件与页面分离
+- services 负责 API 调用
+- hooks 负责状态逻辑复用
+
+### 代码输出要求
+
+* Copilot 生成代码时必须：
+
+- 保持结构清晰
+- 使用统一命名
+- 不生成随机样式
+- 不重复造轮子
+- 优先复用现有组件 / 结构
+- 对外部调用考虑错误处理、重试和日志
+
+## 6. Role Boundaries（角色边界）
+* Product Planner只负责：
+
+- PRD
+- Epic / Feature / Story / AC
+- 产品逻辑结构
+
+* UX Prototyper只负责：
+
+- UX 文档
+- 页面结构
+- 用户流程
+- HTML Prototype
+
+* Eng Reviewer只负责：
+
+- 技术方案
+- 工程风险
+- 架构边界
+- API / 数据 / sequence / service decisions
+* Wiki Publisher只负责：
+
+- 文档类型识别
+- 路径生成
+- Azure DevOps Wiki 发布
+
+* 禁止跨角色越权执行
 
 ## UI work
 Separate:
