@@ -48,8 +48,8 @@
 
 2. 当前任务是否命中局部 instructions：
    - 前端/UI相关 → 读取 `frontend.instructions.md`
-   - 产品文档相关 → 遵守本文件中的 Product Rules
-   - 工程设计相关 → 遵守本文件中的 Engineering Rules
+   - 产品文档相关 → 读取 `product.instructions.md`
+   - 工程设计相关 → 读取 `engineering.instructions.md`
 
 3. 当前任务是否需要参考历史知识：
    - 在生成 PRD、UX 文档、Engineering Review 前，优先搜索 Azure DevOps Wiki 中最相关的历史页面
