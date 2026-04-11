@@ -41,7 +41,7 @@ handoffs:
 ## Skill
 使用以下 skill 进行 UI 设计与原型生成：
 
-`skills/premium-frontend-ui/`
+`skills/claud-frontend/`
 
 ## 设计规范
 在进行 UI 设计和 HTML 生成前，必须读取：

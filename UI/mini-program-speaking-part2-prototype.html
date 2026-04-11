@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Program Speaking Part 2 Prototype</title>
+  <style>
+    :root {
+      --ink-900: #0d1b52;
+      --ink-700: #1f4fbf;
+      --ink-500: #3a7bff;
+      --accent-red: #cf2131;
+      --bg-main: #ffffff;
+      --bg-soft: #fafafa;
+      --bg-muted: #f6f6f6;
+      --line: #eaeaea;
+      --line-strong: #cfcfcf;
+      --text-main: #16213e;
+      --text-subtle: #5d6b88;
+      --success: #157347;
+      --warning: #b56b00;
+      --danger: #c33434;
+      --radius-card: 18px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 18px 50px rgba(17, 43, 112, 0.08);
+      --shadow-card: 0 10px 24px rgba(13, 27, 82, 0.08);
+      --max-width: 1380px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(58, 123, 255, 0.15), transparent 30%),
+        radial-gradient(circle at top right, rgba(207, 33, 49, 0.12), transparent 24%),
+        linear-gradient(180deg, #ffffff 0%, #f8faff 44%, #ffffff 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(rgba(13, 27, 82, 0.06) 0.7px, transparent 0.7px);
+      background-size: 18px 18px;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+    }
+
+    .preloader {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #081335 0%, #173784 50%, #0d1b52 100%);
+      color: white;
+      z-index: 20;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+
+    .preloader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .preloader-inner {
+      text-align: center;
+      width: min(80vw, 420px);
+    }
+
+    .preloader-title {
+      font-size: clamp(28px, 6vw, 64px);
+      line-height: 1.05;
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .preloader-title span {
+      display: inline-block;
+      animation: rise 0.8s ease both;
+    }
+
+    .preloader-title span:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+
+    .preloader-bar {
+      height: 4px;
+      margin-top: 24px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .preloader-progress {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #ffffff 0%, #6ba2ff 70%, #cf2131 100%);
+      animation: loadBar 1.8s ease forwards;
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 24px;
+      margin: 12px auto 0;
+      width: min(calc(100% - 24px), var(--max-width));
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(16px);
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.28s ease;
+    }
+
+    .topbar.hidden-on-scroll {
+      transform: translateY(-130%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, var(--ink-900), var(--ink-700));
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      box-shadow: 0 14px 28px rgba(31, 79, 191, 0.22);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-copy strong,
+    .brand-copy span {
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-copy strong {
+      font-size: 14px;
+      color: var(--ink-900);
+    }
+
+    .brand-copy span {
+      font-size: 12px;
+      color: var(--text-subtle);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav-links button {
+      border: 0;
+      background: transparent;
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease;
+    }
+
+    .nav-links button:hover,
+    .nav-links button.active {
+      background: rgba(58, 123, 255, 0.1);
+      color: var(--ink-700);
+      transform: translateY(-1px);
+    }
+
+    .hero {
+      width: min(calc(100% - 24px), var(--max-width));
+      margin: 28px auto 0;
+      padding: clamp(28px, 4vw, 52px);
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(13, 27, 82, 0.98) 0%, rgba(31, 79, 191, 0.94) 55%, rgba(207, 33, 49, 0.94) 100%);
+      color: white;
+      box-shadow: 0 34px 80px rgba(13, 27, 82, 0.22);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      right: -40px;
+      top: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.24) 0%, transparent 60%);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 32px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(40px, 8vw, 88px);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+      max-width: 760px;
+    }
+
+    .hero h1 span {
+      display: inline-block;
+      animation: rise 0.85s ease both;
+    }
+
+    .hero h1 span:nth-child(2) {
+      animation-delay: 0.08s;
+    }
+
+    .hero h1 span:nth-child(3) {
+      animation-delay: 0.16s;
+    }
+
+    .hero p {
+      max-width: 620px;
+      font-size: 16px;
+      line-height: 24px;
+      margin: 20px 0 0;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .hero-stat {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 28px;
+      line-height: 34px;
+      margin-bottom: 6px;
+    }
+
+    .hero-stat span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.74);
+    }
+
+    .hero-phone {
+      justify-self: end;
+      width: min(100%, 360px);
+      padding: 14px;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(20px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transform: rotate(2deg);
+    }
+
+    .hero-phone-screen {
+      border-radius: 24px;
+      background: linear-gradient(180deg, #fefefe 0%, #f1f5ff 100%);
+      color: var(--text-main);
+      padding: 16px;
+      min-height: 520px;
+      box-shadow: inset 0 0 0 1px rgba(13, 27, 82, 0.06);
+    }
+
+    .phone-notch {
+      width: 120px;
+      height: 18px;
+      border-radius: 999px;
+      background: #0c1027;
+      margin: 0 auto 16px;
+    }
+
+    .hero-banner {
+      background: linear-gradient(135deg, #edf4ff 0%, #dce9ff 70%, #fff2f2 100%);
+      border: 1px solid rgba(58, 123, 255, 0.14);
+      border-radius: 22px;
+      padding: 20px;
+    }
+
+    .hero-banner strong {
+      display: block;
+      font-size: 22px;
+      line-height: 28px;
+      margin-bottom: 10px;
+      color: var(--ink-900);
+    }
+
+    .hero-banner p {
+      margin: 0;
+      color: var(--text-subtle);
+      font-size: 14px;
+      line-height: 22px;
+    }
+
+    .layout {
+      width: min(calc(100% - 24px), var(--max-width));
+      margin: 28px auto 48px;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 22px 12px;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 28px;
+    }
+
+    .panel-subtle {
+      color: var(--text-subtle);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .controls {
+      padding: 0 22px 22px;
+      position: sticky;
+      top: 92px;
+    }
+
+    .group {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      margin-top: 18px;
+    }
+
+    .group:first-child {
+      padding-top: 0;
+      margin-top: 0;
+      border-top: 0;
+    }
+
+    .group-title {
+      font-size: 12px;
+      line-height: 18px;
+      color: var(--text-subtle);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .chip-row,
+    .level-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip,
+    .level-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--text-main);
+      border-radius: var(--radius-pill);
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 18px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .chip:hover,
+    .level-btn:hover,
+    .chip.active,
+    .level-btn.active {
+      transform: translateY(-1px);
+      background: rgba(58, 123, 255, 0.1);
+      border-color: rgba(58, 123, 255, 0.18);
+      color: var(--ink-700);
+    }
+
+    .small-note {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 18px;
+      color: var(--text-subtle);
+    }
+
+    .workspace {
+      display: grid;
+      gap: 20px;
+    }
+
+    .storyboard {
+      display: grid;
+      grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .phone-stage {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 760px;
+      background:
+        linear-gradient(180deg, rgba(58, 123, 255, 0.06) 0%, rgba(207, 33, 49, 0.05) 100%),
+        var(--bg-soft);
+      border: 1px solid rgba(58, 123, 255, 0.06);
+      border-radius: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phone-stage::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(58, 123, 255, 0.14), transparent 65%);
+      top: -90px;
+      left: -90px;
+    }
+
+    .phone-frame {
+      position: relative;
+      width: min(100%, 340px);
+      min-height: 690px;
+      padding: 14px;
+      border-radius: 34px;
+      background: linear-gradient(180deg, #0e1433 0%, #1d2d65 100%);
+      box-shadow: 0 26px 50px rgba(11, 20, 58, 0.24);
+    }
+
+    .phone-screen {
+      min-height: 660px;
+      background: #ffffff;
+      border-radius: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px 8px;
+      font-size: 12px;
+      color: var(--text-subtle);
+    }
+
+    .screen-scroll {
+      padding: 0 18px 18px;
+    }
+
+    .mobile-banner {
+      padding: 18px;
+      border-radius: 22px;
+      color: white;
+      background: linear-gradient(135deg, #10266e 0%, #2260d2 65%, #d33d4b 100%);
+      position: relative;
+      overflow: hidden;
+      min-height: 168px;
+    }
+
+    .mobile-banner.ended {
+      background: linear-gradient(135deg, #5d657c 0%, #9aa1b7 100%);
+    }
+
+    .mobile-banner::after {
+      content: "";
+      position: absolute;
+      inset: auto -20px -30px auto;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.24), transparent 70%);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: var(--radius-pill);
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.16);
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .mobile-banner h3 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 32px;
+      letter-spacing: -0.04em;
+    }
+
+    .mobile-banner p {
+      margin: 12px 0 0;
+      font-size: 13px;
+      line-height: 20px;
+      max-width: 220px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--bg-main);
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 18px rgba(13, 27, 82, 0.05);
+    }
+
+    .card.soft {
+      background: var(--bg-soft);
+    }
+
+    .card h4,
+    .card h5 {
+      margin: 0;
+      color: var(--ink-900);
+    }
+
+    .card h4 {
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .card h5 {
+      font-size: 14px;
+      line-height: 20px;
+    }
+
+    .card p {
+      margin: 8px 0 0;
+      font-size: 13px;
+      line-height: 20px;
+      color: var(--text-subtle);
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      border-radius: var(--radius-pill);
+      padding: 7px 10px;
+      background: #eef3ff;
+      color: var(--ink-700);
+      font-size: 12px;
+    }
+
+    .cta-row {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      min-height: 56px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(13, 27, 82, 0.1);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .btn-primary {
+      color: white;
+      background: linear-gradient(135deg, var(--ink-900), var(--ink-700));
+    }
+
+    .btn-secondary {
+      color: var(--ink-700);
+      background: #eef3ff;
+      border: 1px solid rgba(58, 123, 255, 0.15);
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      background: #fff2f2;
+      border: 1px solid rgba(195, 52, 52, 0.15);
+    }
+
+    .btn-disabled {
+      color: #7f869d;
+      background: #d8d8d8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status-block {
+      display: grid;
+      gap: 12px;
+    }
+
+    .question-image {
+      aspect-ratio: 4 / 3;
+      border-radius: 18px;
+      padding: 16px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(160deg, #183b9a 0%, #2c77ff 70%, #74a8ff 100%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .question-image::after {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 68%);
+      right: -40px;
+      bottom: -40px;
+    }
+
+    .question-image strong {
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+      line-height: 22px;
+      max-width: 78%;
+    }
+
+    .question-image span {
+      position: relative;
+      z-index: 1;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.84);
+    }
+
+    .record-panel {
+      background: linear-gradient(180deg, #0f1d50 0%, #162f7a 100%);
+      border-radius: 22px;
+      padding: 18px;
+      color: white;
+    }
+
+    .record-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .record-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .record-waves {
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 4px;
+      height: 64px;
+      margin: 20px 0 12px;
+    }
+
+    .record-waves span {
+      width: 6px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffffff, #9ec0ff);
+      animation: wave 1s ease-in-out infinite;
+      opacity: 0.35;
+    }
+
+    .record-waves.active span {
+      opacity: 1;
+    }
+
+    .record-waves span:nth-child(1) { height: 18px; animation-delay: 0s; }
+    .record-waves span:nth-child(2) { height: 32px; animation-delay: 0.1s; }
+    .record-waves span:nth-child(3) { height: 50px; animation-delay: 0.2s; }
+    .record-waves span:nth-child(4) { height: 28px; animation-delay: 0.3s; }
+    .record-waves span:nth-child(5) { height: 42px; animation-delay: 0.4s; }
+    .record-waves span:nth-child(6) { height: 22px; animation-delay: 0.5s; }
+
+    .timer {
+      font-family: Arial, sans-serif;
+      font-size: 36px;
+      line-height: 42px;
+      letter-spacing: -0.04em;
+      text-align: center;
+    }
+
+    .record-note {
+      font-size: 12px;
+      line-height: 18px;
+      color: rgba(255, 255, 255, 0.78);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .triple-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mini-btn {
+      min-height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .wait-illustration,
+    .result-visual {
+      border-radius: 24px;
+      min-height: 200px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wait-illustration {
+      background: linear-gradient(135deg, #edf4ff 0%, #dbe7ff 100%);
+      color: var(--ink-900);
+    }
+
+    .result-visual {
+      color: white;
+      background: linear-gradient(135deg, #0d1b52 0%, #1f4fbf 100%);
+    }
+
+    .result-visual::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 68%);
+      bottom: -60px;
+      right: -40px;
+    }
+
+    .result-level {
+      position: relative;
+      z-index: 1;
+    }
+
+    .result-level strong {
+      display: block;
+      font-family: Arial, sans-serif;
+      font-size: 56px;
+      line-height: 1;
+      letter-spacing: -0.06em;
+    }
+
+    .result-level span {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 20px;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .link-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink-700);
+      font-size: 13px;
+      line-height: 20px;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      margin-top: 14px;
+    }
+
+    .overview {
+      padding: 22px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .spec-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #fafcff 100%);
+    }
+
+    .spec-card h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .spec-card ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: var(--text-subtle);
+      font-size: 13px;
+      line-height: 21px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 26px;
+      transform: translateX(-50%) translateY(20px);
+      padding: 12px 16px;
+      border-radius: 999px;
+      background: rgba(13, 27, 82, 0.9);
+      color: white;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 30;
+      box-shadow: 0 14px 30px rgba(13, 27, 82, 0.24);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .footer-note {
+      padding: 0 22px 22px;
+      color: var(--text-subtle);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.7); }
+      50% { transform: scaleY(1.25); }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes loadBar {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid,
+      .layout,
+      .storyboard,
+      .overview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-phone {
+        justify-self: start;
+        transform: none;
+      }
+
+      .controls {
+        position: static;
+      }
+
+      .phone-stage {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar {
+        padding: 12px 14px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero,
+      .layout {
+        width: min(calc(100% - 16px), var(--max-width));
+      }
+
+      .hero {
+        margin-top: 16px;
+        border-radius: 24px;
+      }
+
+      .phone-stage,
+      .overview {
+        padding: 16px;
+      }
+
+      .panel-head,
+      .controls,
+      .footer-note {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="preloader-inner">
+      <p class="preloader-title"><span>Speaking</span> <span>Part 2</span></p>
+      <div class="preloader-bar"><div class="preloader-progress"></div></div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <header class="topbar" id="topbar">
+      <div class="brand">
+        <div class="brand-badge">BC</div>
+        <div class="brand-copy">
+          <strong>Mini Program Speaking Prototype</strong>
+          <span>British Council 风格活动原型</span>
+        </div>
+      </div>
+      <nav class="nav-links" aria-label="章节导航">
+        <button class="active" data-scroll-target="hero">概览</button>
+        <button data-scroll-target="prototype">原型</button>
+        <button data-scroll-target="specs">页面结构</button>
+      </nav>
+    </header>
+
+    <section class="hero" id="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">微信小程序活动 · IELTS Mock Speaking Part 2</div>
+          <h1><span>一次参与</span> <span>一次上传</span> <span>一次出分</span></h1>
+          <p>本原型用于评审首页状态切换、随机题图录音上传、等待页分享、CEFR 出分展示与活动结束态。交互均可直接点击体验，重点验证用户状态、活动状态和录音流程的一致性。</p>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <strong>38</strong>
+              <span>随机题图题库</span>
+            </div>
+            <div class="hero-stat">
+              <strong>2:00</strong>
+              <span>倒计时录音上限</span>
+            </div>
+            <div class="hero-stat">
+              <strong>A1-C2</strong>
+              <span>CEFR 结果展示</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-phone">
+          <div class="hero-phone-screen">
+            <div class="phone-notch"></div>
+            <div class="hero-banner">
+              <strong>立即参与口语测评</strong>
+              <p>通过微信授权进入活动，完成 Part 2 题目作答、录音上传，并在结果回传后查看 CEFR 等级与鼓励文案。</p>
+            </div>
+            <div class="stack">
+              <div class="card soft">
+                <h5>首页 CTA 规则</h5>
+                <p>未提交显示立即参与；未出分显示等待测评结果；已出分显示查看结果；活动结束则禁用并切换结束 Banner。</p>
+              </div>
+              <div class="card soft">
+                <h5>录音后动作</h5>
+                <p>结束录音后自动出现重新录音、播放、上传录音三个按钮。重录前必须确认删除旧录音。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <main class="layout" id="prototype">
+      <aside class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>交互控制台</h2>
+            <div class="panel-subtle">切换不同用户状态和结果等级</div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="group">
+            <div class="group-title">用户状态</div>
+            <div class="chip-row" id="stateSwitches">
+              <button class="chip active" data-state="ready">未提交</button>
+              <button class="chip" data-state="waiting">等待结果</button>
+              <button class="chip" data-state="result">查看结果</button>
+              <button class="chip" data-state="ended">活动结束</button>
+            </div>
+            <div class="small-note">控制首页 CTA、Banner 和可跳转页面。</div>
+          </div>
+
+          <div class="group">
+            <div class="group-title">CEFR 等级</div>
+            <div class="level-row" id="levelSwitches">
+              <button class="level-btn active" data-level="A1">A1</button>
+              <button class="level-btn" data-level="A2">A2</button>
+              <button class="level-btn" data-level="B1">B1</button>
+              <button class="level-btn" data-level="B2">B2</button>
+              <button class="level-btn" data-level="C1">C1</button>
+              <button class="level-btn" data-level="C2">C2</button>
+            </div>
+            <div class="small-note">控制结果页背景、主视觉和鼓励文案。</div>
+          </div>
+
+          <div class="group">
+            <div class="group-title">录音模拟</div>
+            <button class="btn btn-primary" id="startRecordBtn" type="button">开始录音</button>
+            <div class="small-note">开始后将进入 2 分钟倒计时。可手动结束，也可让系统自动结束。</div>
+          </div>
+        </div>
+        <div class="footer-note">原型说明：为了评审效率，录音和分享均为前端模拟，不调用真实微信能力。</div>
+      </aside>
+
+      <section class="workspace">
+        <div class="panel storyboard">
+          <div class="phone-stage">
+            <div class="phone-frame">
+              <div class="phone-screen">
+                <div class="phone-status">
+                  <span>9:41</span>
+                  <span>5G · 100%</span>
+                </div>
+                <div class="screen-scroll">
+                  <section id="screen-main" class="screen-page">
+                    <div class="mobile-banner" id="mainBanner">
+                      <div class="tag" id="bannerTag">活动进行中</div>
+                      <h3 id="bannerTitle">口语测评邀请中</h3>
+                      <p id="bannerText">阅读 Part 2 题目图片，完成一次 2 分钟口语录音上传，测评结果将在 1 周内返回。</p>
+                    </div>
+                    <div class="stack">
+                      <div class="card">
+                        <h4>本次活动规则</h4>
+                        <p>每位考生仅可提交 1 次有效录音，系统将按 unionId 绑定参与记录并接收后续评分结果。</p>
+                        <div class="pill-list">
+                          <span class="pill">微信授权</span>
+                          <span class="pill">随机抽题</span>
+                          <span class="pill">仅可上传一次</span>
+                        </div>
+                      </div>
+                      <div class="card soft">
+                        <h5>当前状态</h5>
+                        <p id="mainStatusCopy">你尚未提交录音，可立即开始本次口语测评。</p>
+                      </div>
+                      <div class="cta-row">
+                        <button class="btn btn-primary" id="ctaPrimary" type="button">立即参与</button>
+                        <button class="btn btn-secondary" id="ctaSecondary" type="button">开始口语测评</button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section id="screen-record" class="screen-page hidden">
+                    <div class="card soft">
+                      <h5>Part 2 题目图片</h5>
+                      <p>系统已从 38 套题目中随机抽取 1 套，并在本次参与中固定。</p>
+                    </div>
+                    <div class="question-image">
+                      <strong id="questionTitle">Describe a person who encouraged you to try something new.</strong>
+                      <span id="questionMeta">Question Set 12 / Image-based prompt</span>
+                    </div>
+                    <div class="record-panel">
+                      <div class="record-header">
+                        <div>
+                          <strong>录音控制台</strong>
+                          <div class="record-note" id="recordSummary">点击开始录音后，倒计时从 2:00 开始。</div>
+                        </div>
+                        <div class="record-status" id="recordStateTag">等待录音</div>
+                      </div>
+                      <div class="record-waves" id="recordWaves" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                      </div>
+                      <div class="timer" id="recordTimer">02:00</div>
+                      <div class="record-note" id="recordHint">录音中可手动结束。结束后可重新录音、播放或上传。</div>
+                      <div class="cta-row" id="recordPrimaryActions">
+                        <button class="btn btn-primary" id="recordActionBtn" type="button">开始录音</button>
+                      </div>
+                      <div class="triple-grid hidden" id="recordReviewActions">
+                        <button class="mini-btn" id="rerecordBtn" type="button">重新录音</button>
+                        <button class="mini-btn" id="playBtn" type="button">播放</button>
+                        <button class="mini-btn" id="uploadBtn" type="button">上传录音</button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section id="screen-waiting" class="screen-page hidden">
+                    <div class="wait-illustration">
+                      <div>
+                        <strong style="font-size: 22px; line-height: 28px; display: block;">等待测评结果</strong>
+                        <span style="font-size: 13px; line-height: 20px; color: var(--text-subtle);">上传成功后进入待评分状态</span>
+                      </div>
+                    </div>
+                    <div class="stack">
+                      <div class="card">
+                        <h4>评估时间</h4>
+                        <p>评估结果通常在 1 周内返回，请耐心等待。</p>
+                      </div>
+                      <div class="cta-row">
+                        <button class="btn btn-primary" id="shareFriendBtn" type="button">分享给好友</button>
+                        <button class="btn btn-secondary" id="shareTimelineBtn" type="button">分享到朋友圈</button>
+                        <button class="btn btn-secondary" id="backHomeFromWaiting" type="button">返回首页</button>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section id="screen-result" class="screen-page hidden">
+                    <div class="result-visual" id="resultVisual">
+                      <div class="result-level">
+                        <strong id="resultLevel">A1</strong>
+                        <span id="resultLabel">Starter</span>
+                      </div>
+                    </div>
+                    <div class="stack">
+                      <div class="card">
+                        <h4 id="resultTitle">A1 入门级</h4>
+                        <p id="resultCopy">你已经能使用简单词句完成基础表达，继续积累高频表达和发音节奏，会越来越稳。</p>
+                        <a href="#" class="link-row" id="cefrLink">IELTS and the CEFR</a>
+                      </div>
+                      <div class="cta-row">
+                        <button class="btn btn-secondary" id="shareResultBtn" type="button">分享本次活动</button>
+                        <button class="btn btn-primary" id="backHomeFromResult" type="button">返回首页</button>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="overview">
+            <div>
+              <h2 style="margin: 0; font-size: 24px; line-height: 32px;">页面与交互说明</h2>
+              <p style="margin: 8px 0 0; color: var(--text-subtle); font-size: 14px; line-height: 22px;">左侧手机框是小程序关键页面原型，右侧说明区汇总页面结构、组件和状态逻辑，适合 PM、设计、研发同步评审。</p>
+            </div>
+            <div class="overview-grid">
+              <div class="spec-card">
+                <h3>首页 Main</h3>
+                <ul>
+                  <li>双 CTA 同逻辑，按用户状态切换文案和可点击性</li>
+                  <li>活动结束时切换结束 Banner 与禁用态</li>
+                  <li>规则卡片强调仅可提交一次</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>开始测评页</h3>
+                <ul>
+                  <li>题目图片区优先展示</li>
+                  <li>录音中显示状态、倒计时和波形</li>
+                  <li>结束后自动出现重录、播放、上传动作</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>等待页</h3>
+                <ul>
+                  <li>固定评估时间文案不可与结果页混淆</li>
+                  <li>分享按钮作为次级行动</li>
+                  <li>保留返回首页入口</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>结果页</h3>
+                <ul>
+                  <li>CEFR 主视觉图与背景图为首屏焦点</li>
+                  <li>链接区固定展示 IELTS and the CEFR</li>
+                  <li>每个等级从 5 句文案中随机抽 1 句</li>
+                </ul>
+              </div>
+            </div>
+            <div class="spec-card">
+              <h3>状态矩阵</h3>
+              <ul>
+                <li>未提交：首页可进入录音页</li>
+                <li>已提交未出分：首页 CTA 禁用并进入等待页</li>
+                <li>已出分：首页 CTA 跳结果页</li>
+                <li>活动结束未提交：首页仅展示结束 Banner 和禁用 CTA</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <section class="panel" id="specs">
+          <div class="panel-head">
+            <div>
+              <h2>UI 设计摘要</h2>
+              <div class="panel-subtle">遵循 British Council 风格的颜色、层级和移动端按钮规范</div>
+            </div>
+          </div>
+          <div class="overview">
+            <div class="overview-grid">
+              <div class="spec-card">
+                <h3>视觉方向</h3>
+                <ul>
+                  <li>以暗靛蓝、亮靛蓝、白色为主色</li>
+                  <li>辅以红色作为活动强调色</li>
+                  <li>保持大留白、浅底卡片和柔和阴影</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>排版体系</h3>
+                <ul>
+                  <li>首页标题使用大号流体标题强化活动感</li>
+                  <li>正文统一使用 14px 到 16px 体系</li>
+                  <li>英文链接采用 Arial 风格表达英文内容</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>核心组件</h3>
+                <ul>
+                  <li>Banner、状态卡片、录音控制、结果展示为核心复用组件</li>
+                  <li>按钮保留默认、悬浮、点击、禁用状态</li>
+                  <li>上传和分享使用 Toast 统一反馈</li>
+                </ul>
+              </div>
+              <div class="spec-card">
+                <h3>响应式策略</h3>
+                <ul>
+                  <li>桌面端采用说明区与手机预览并排</li>
+                  <li>移动端收敛成单列手机流</li>
+                  <li>重交互仅在支持 hover 的设备上增强</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const stateButtons = document.querySelectorAll('#stateSwitches .chip');
+    const levelButtons = document.querySelectorAll('#levelSwitches .level-btn');
+    const screenMain = document.getElementById('screen-main');
+    const screenRecord = document.getElementById('screen-record');
+    const screenWaiting = document.getElementById('screen-waiting');
+    const screenResult = document.getElementById('screen-result');
+    const mainBanner = document.getElementById('mainBanner');
+    const bannerTag = document.getElementById('bannerTag');
+    const bannerTitle = document.getElementById('bannerTitle');
+    const bannerText = document.getElementById('bannerText');
+    const mainStatusCopy = document.getElementById('mainStatusCopy');
+    const ctaPrimary = document.getElementById('ctaPrimary');
+    const ctaSecondary = document.getElementById('ctaSecondary');
+    const startRecordBtn = document.getElementById('startRecordBtn');
+    const recordActionBtn = document.getElementById('recordActionBtn');
+    const recordReviewActions = document.getElementById('recordReviewActions');
+    const recordPrimaryActions = document.getElementById('recordPrimaryActions');
+    const recordTimer = document.getElementById('recordTimer');
+    const recordSummary = document.getElementById('recordSummary');
+    const recordHint = document.getElementById('recordHint');
+    const recordStateTag = document.getElementById('recordStateTag');
+    const recordWaves = document.getElementById('recordWaves');
+    const resultVisual = document.getElementById('resultVisual');
+    const resultLevel = document.getElementById('resultLevel');
+    const resultLabel = document.getElementById('resultLabel');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultCopy = document.getElementById('resultCopy');
+    const toast = document.getElementById('toast');
+
+    const questionBank = [
+      { title: 'Describe a person who encouraged you to try something new.', meta: 'Question Set 12 / Image-based prompt' },
+      { title: 'Describe a place where you like to go to relax.', meta: 'Question Set 07 / Image-based prompt' },
+      { title: 'Describe a time when you learned something from a family member.', meta: 'Question Set 21 / Image-based prompt' }
+    ];
+
+    const levelMap = {
+      A1: {
+        label: 'Starter',
+        title: 'A1 入门级',
+        bg: 'linear-gradient(135deg, #233261 0%, #4862a4 100%)',
+        copies: [
+          '你已经能使用简单词句完成基础表达，继续积累高频表达和发音节奏，会越来越稳。',
+          '看到你迈进口语表达的第一步很棒，持续练习熟悉句型，会让你更敢开口。',
+          '你已经能在熟悉话题中做基础回应，下一步可以重点补充连接词和细节。',
+          '基础表达已经起步，继续保持规律练习，开口反应会越来越自然。',
+          '你正在建立口语信心，只要持续说、持续听，进步会很明显。'
+        ]
+      },
+      A2: {
+        label: 'Daily Communicator',
+        title: 'A2 基础级',
+        bg: 'linear-gradient(135deg, #0d3f8f 0%, #3d85ff 100%)',
+        copies: [
+          '恭喜解锁日常畅聊鸭！超市点单、餐厅问路都能搞定，日常沟通越来越溜，太能干啦！',
+          '日常畅聊鸭你超牛！能简单描述昨天去哪玩，口语表达有画面感，你的进步大家都看到啦！',
+          '看到你成为日常畅聊鸭好惊喜！听懂对话还能及时回应，每一次交流都是成长，继续加油！',
+          '日常畅聊鸭太优秀！基础句型用得超熟练，接下来挑战更复杂表达，你一定没问题！',
+          '为日常畅聊鸭喝彩！从不敢说到能畅聊，你的努力超值得，未来会更棒！'
+        ]
+      },
+      B1: {
+        label: 'Confident Speaker',
+        title: 'B1 进阶级',
+        bg: 'linear-gradient(135deg, #0b4b66 0%, #1f8bb3 100%)',
+        copies: [
+          '你已经能把经历说得更完整，继续强化结构和细节，表达会更有说服力。',
+          '看到你在熟悉话题上表达得更连贯，这是从会说到说得清楚的重要一步。',
+          '你已经具备稳定交流能力，再往前一步就是让语言更自然、更有层次。',
+          '你现在的口语表现很有潜力，保持练习会让你更从容地展开观点。',
+          '这次表现说明你已经能自信展开内容，继续加强语音和连接表达会更出色。'
+        ]
+      },
+      B2: {
+        label: 'Fluent Performer',
+        title: 'B2 熟练级',
+        bg: 'linear-gradient(135deg, #47236c 0%, #7a42bc 100%)',
+        copies: [
+          '你的表达已经相当流畅，观点展开和细节支撑都在变强，继续保持高质量练习。',
+          '你已经能较自然地完成中长段表达，这是接近高分口语表现的重要信号。',
+          '你的语言组织能力很稳，如果再加强精准措辞，会更具高级感。',
+          '现在的你已经能比较轻松地讲清楚故事和观点，继续打磨语音与逻辑会更亮眼。',
+          'B2 的状态很有竞争力，接下来重点提升语言精确度和临场反应。'
+        ]
+      },
+      C1: {
+        label: 'Advanced Communicator',
+        title: 'C1 高阶级',
+        bg: 'linear-gradient(135deg, #7b1827 0%, #d23a59 100%)',
+        copies: [
+          '你的表达已具备高级流畅度和层次感，继续打磨细微准确性会非常出彩。',
+          '现在的你已经能较成熟地组织观点并自然展开，是非常亮眼的口语水平。',
+          '听得出来你对语言掌控力很强，继续提升即兴表达的稳定性会更上一层。',
+          '你展现出了高质量的表达节奏和逻辑结构，这已经很接近高阶输出。',
+          '你的口语表现成熟自信，只要继续保持输入与输出平衡，会越来越稳。'
+        ]
+      },
+      C2: {
+        label: 'Mastery',
+        title: 'C2 精通级',
+        bg: 'linear-gradient(135deg, #12202f 0%, #32495f 100%)',
+        copies: [
+          '你的表达非常成熟，自然度、准确度和组织性都展现出高水平控制力。',
+          '这次表现体现了接近母语级别的表达掌控，已经具备非常强的口语竞争力。',
+          '你对语言的节奏和内容推进非常自然，这样的输出非常难得。',
+          '你的表达不仅流畅，而且有逻辑、有层次，已经达到极高完成度。',
+          'C2 的表现相当出色，说明你已经可以非常自如地驾驭复杂表达场景。'
+        ]
+      }
+    };
+
+    const stateConfig = {
+      ready: {
+        tag: '活动进行中',
+        title: '口语测评邀请中',
+        text: '阅读 Part 2 题目图片，完成一次 2 分钟口语录音上传，测评结果将在 1 周内返回。',
+        statusCopy: '你尚未提交录音，可立即开始本次口语测评。',
+        primary: { text: '立即参与', className: 'btn btn-primary', disabled: false },
+        secondary: { text: '开始口语测评', className: 'btn btn-secondary', disabled: false },
+        bannerEnded: false,
+        screen: 'main'
+      },
+      waiting: {
+        tag: '已提交待评估',
+        title: '等待测评结果',
+        text: '录音已成功上传，评估结果通常在 1 周内返回。你可以先分享本次活动。',
+        statusCopy: '你的录音已上传成功，当前正在等待测评结果。',
+        primary: { text: '等待测评结果', className: 'btn btn-disabled', disabled: true },
+        secondary: { text: '等待测评结果', className: 'btn btn-disabled', disabled: true },
+        bannerEnded: false,
+        screen: 'waiting'
+      },
+      result: {
+        tag: '结果已返回',
+        title: '查看你的 CEFR 结果',
+        text: '成绩已回传，点击查看结果进入 CEFR 结果展示页，并阅读本次对应等级文案。',
+        statusCopy: '你的结果已经返回，可点击查看结果进入结果页。',
+        primary: { text: '查看结果', className: 'btn btn-primary', disabled: false },
+        secondary: { text: '查看结果', className: 'btn btn-secondary', disabled: false },
+        bannerEnded: false,
+        screen: 'result'
+      },
+      ended: {
+        tag: '活动已结束',
+        title: '谢谢参与，活动结束',
+        text: '活动入口已经关闭，未提交用户不可再参与本次录音测评。',
+        statusCopy: '活动已经结束，当前不可再提交新的录音。',
+        primary: { text: '谢谢参与，活动结束', className: 'btn btn-disabled', disabled: true },
+        secondary: { text: '谢谢参与，活动结束', className: 'btn btn-disabled', disabled: true },
+        bannerEnded: true,
+        screen: 'main'
+      }
+    };
+
+    let activeState = 'ready';
+    let activeLevel = 'A1';
+    let timerSeconds = 120;
+    let recordMode = 'idle';
+    let timerId = null;
+
+    const formatTime = (seconds) => {
+      const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const sec = String(seconds % 60).padStart(2, '0');
+      return `${min}:${sec}`;
+    };
+
+    const showToast = (message) => {
+      toast.textContent = message;
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timeout);
+      showToast.timeout = window.setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1800);
+    };
+
+    const randomCopy = (copies) => copies[Math.floor(Math.random() * copies.length)];
+
+    const updateLevel = (level) => {
+      activeLevel = level;
+      const config = levelMap[level];
+      resultVisual.style.background = config.bg;
+      resultLevel.textContent = level;
+      resultLabel.textContent = config.label;
+      resultTitle.textContent = config.title;
+      resultCopy.textContent = randomCopy(config.copies);
+      levelButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.level === level);
+      });
+    };
+
+    const showScreen = (screenName) => {
+      screenMain.classList.toggle('hidden', screenName !== 'main');
+      screenRecord.classList.toggle('hidden', screenName !== 'record');
+      screenWaiting.classList.toggle('hidden', screenName !== 'waiting');
+      screenResult.classList.toggle('hidden', screenName !== 'result');
+    };
+
+    const applyState = (state) => {
+      activeState = state;
+      const config = stateConfig[state];
+      bannerTag.textContent = config.tag;
+      bannerTitle.textContent = config.title;
+      bannerText.textContent = config.text;
+      mainStatusCopy.textContent = config.statusCopy;
+      ctaPrimary.textContent = config.primary.text;
+      ctaPrimary.className = config.primary.className;
+      ctaPrimary.disabled = config.primary.disabled;
+      ctaSecondary.textContent = config.secondary.text;
+      ctaSecondary.className = config.secondary.className;
+      ctaSecondary.disabled = config.secondary.disabled;
+      mainBanner.classList.toggle('ended', config.bannerEnded);
+      stateButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.state === state);
+      });
+      showScreen(config.screen);
+    };
+
+    const resetRecordUi = () => {
+      window.clearInterval(timerId);
+      timerId = null;
+      timerSeconds = 120;
+      recordMode = 'idle';
+      recordTimer.textContent = formatTime(timerSeconds);
+      recordSummary.textContent = '点击开始录音后，倒计时从 2:00 开始。';
+      recordHint.textContent = '录音中可手动结束。结束后可重新录音、播放或上传。';
+      recordStateTag.textContent = '等待录音';
+      recordWaves.classList.remove('active');
+      recordActionBtn.textContent = '开始录音';
+      recordPrimaryActions.classList.remove('hidden');
+      recordReviewActions.classList.add('hidden');
+    };
+
+    const stopRecording = (byAuto = false) => {
+      if (recordMode !== 'recording') return;
+      window.clearInterval(timerId);
+      timerId = null;
+      recordMode = 'review';
+      recordStateTag.textContent = byAuto ? '已自动结束' : '录音已完成';
+      recordSummary.textContent = byAuto ? '倒计时归零，系统已自动结束录音。' : '你已手动结束录音，可以播放、重录或上传。';
+      recordHint.textContent = '点击重新录音前，将提示删除上一条录音。';
+      recordWaves.classList.remove('active');
+      recordPrimaryActions.classList.add('hidden');
+      recordReviewActions.classList.remove('hidden');
+    };
+
+    const startRecording = () => {
+      if (recordMode === 'recording') {
+        stopRecording(false);
+        return;
+      }
+      timerSeconds = 120;
+      recordMode = 'recording';
+      recordStateTag.textContent = '录音中';
+      recordSummary.textContent = '录音已经开始，倒计时进行中。';
+      recordHint.textContent = '点击结束录音可提前停止。到 0 秒将自动结束。';
+      recordActionBtn.textContent = '结束录音';
+      recordPrimaryActions.classList.remove('hidden');
+      recordReviewActions.classList.add('hidden');
+      recordWaves.classList.add('active');
+      recordTimer.textContent = formatTime(timerSeconds);
+      window.clearInterval(timerId);
+      timerId = window.setInterval(() => {
+        timerSeconds -= 1;
+        recordTimer.textContent = formatTime(timerSeconds);
+        if (timerSeconds <= 0) {
+          recordTimer.textContent = '00:00';
+          stopRecording(true);
+        }
+      }, 1000);
+    };
+
+    const goHome = () => {
+      applyState(activeState);
+    };
+
+    stateButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        applyState(button.dataset.state);
+      });
+    });
+
+    levelButtons.forEach((button) => {
+      button.addEventListener('click', () => updateLevel(button.dataset.level));
+    });
+
+    document.querySelectorAll('[data-scroll-target]').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('[data-scroll-target]').forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        const target = document.getElementById(button.dataset.scrollTarget);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    ctaPrimary.addEventListener('click', () => {
+      if (activeState === 'ready') {
+        showScreen('record');
+      } else if (activeState === 'result') {
+        showScreen('result');
+      }
+    });
+
+    ctaSecondary.addEventListener('click', () => {
+      if (activeState === 'ready') {
+        showScreen('record');
+      } else if (activeState === 'result') {
+        showScreen('result');
+      }
+    });
+
+    startRecordBtn.addEventListener('click', () => {
+      showScreen('record');
+      startRecording();
+    });
+
+    recordActionBtn.addEventListener('click', startRecording);
+
+    document.getElementById('rerecordBtn').addEventListener('click', () => {
+      const confirmed = window.confirm('之前的录音内容将被删除，是否重新录音？');
+      if (!confirmed) return;
+      showToast('旧录音已删除，请重新开始录音');
+      resetRecordUi();
+      startRecording();
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => {
+      showToast('正在播放最近一次录音');
+    });
+
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      recordStateTag.textContent = '上传中';
+      recordSummary.textContent = '录音文件上传中，正在创建提交记录。';
+      showToast('上传成功，进入等待测评结果');
+      window.setTimeout(() => {
+        applyState('waiting');
+      }, 400);
+    });
+
+    document.getElementById('shareFriendBtn').addEventListener('click', () => {
+      showToast('已调起微信分享给好友');
+    });
+
+    document.getElementById('shareTimelineBtn').addEventListener('click', () => {
+      showToast('已调起分享到朋友圈');
+    });
+
+    document.getElementById('shareResultBtn').addEventListener('click', () => {
+      showToast('已调起活动分享');
+    });
+
+    document.getElementById('backHomeFromWaiting').addEventListener('click', goHome);
+    document.getElementById('backHomeFromResult').addEventListener('click', goHome);
+
+    const question = questionBank[Math.floor(Math.random() * questionBank.length)];
+    document.getElementById('questionTitle').textContent = question.title;
+    document.getElementById('questionMeta').textContent = question.meta;
+
+    let lastY = window.scrollY;
+    const topbar = document.getElementById('topbar');
+    window.addEventListener('scroll', () => {
+      const current = window.scrollY;
+      if (current > lastY && current > 120) {
+        topbar.classList.add('hidden-on-scroll');
+      } else {
+        topbar.classList.remove('hidden-on-scroll');
+      }
+      lastY = current;
+    });
+
+    window.addEventListener('load', () => {
+      window.setTimeout(() => {
+        document.getElementById('preloader').classList.add('hidden');
+      }, 1700);
+    });
+
+    applyState('ready');
+    updateLevel('A1');
+    resetRecordUi();
+  </script>
+</body>
+</html>
