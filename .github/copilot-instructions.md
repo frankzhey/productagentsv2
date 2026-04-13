@@ -43,6 +43,7 @@
    - UX / UI 设计
    - 工程评审
    - 代码实现
+   - Task 拆分
    - Wiki 发布
    - 历史知识检索
 
@@ -51,10 +52,10 @@
    - 产品文档相关 → 读取 `product.instructions.md`
    - 工程设计相关 → 读取 `engineering.instructions.md`
 
-3. 当前任务是否需要参考历史知识：
+<!--3. 当前任务是否需要参考历史知识：
    - 在生成 PRD、UX 文档、Engineering Review 前，优先搜索 Azure DevOps Wiki 中最相关的历史页面
    - 优先参考最近、结构完整、与当前系统或业务最相似的 3–5 个页面
-   - 历史内容仅作为参考，当前需求优先
+   - 历史内容仅作为参考，当前需求优先-->
 
 ---
 ## 1. Product Rules (PM)
@@ -225,6 +226,7 @@ PRD must follow a structured format phased by scope:
 
 * PRD 发布至 `/wiki/{epic-name}`
 * UX 发布至 `/wiki/{epic-name}/ui-prototype`
+* Engineering Review 发布至 `/wiki/{epic-name}/engineering-review`
 
 ## 5. Coding Rules (代码)
 
@@ -286,6 +288,11 @@ src/
 - 文档类型识别
 - 路径生成
 - Azure DevOps Wiki 发布
+
+* Task Planner只负责：
+- Task 拆分
+- 估算
+- 依赖识别
 
 * 禁止跨角色越权执行
 
