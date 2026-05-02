@@ -1,153 +1,162 @@
-# V2 修改预览（Review 用）
+# ProductPortfolio — AI Agent 协作工作流
 
-> 创建时间：2026-04-28
-> 目的：把 AC 规则抽象到 SKILL + 清理 instructions 与 agent 重复内容
-> 状态：**预览版，未应用到 live 文件**。Review 通过后才覆盖到 `PM agents/` 根目录。
-
----
-
-## 一、文件清单
-
-| V2 文件 | 对应原文件 | 行数变化 | 类型 |
-|---------|----------|---------|------|
-| `skills/ac-writing-spec/SKILL.md` | （新建） | +290 行 | 🆕 NEW |
-| `instructions/product.instructions.md` | `../instructions/product.instructions.md`（303 行） | ~110 行（-193） | ✂️ 瘦身 |
-| `product-planner.agent.md` | `../product-planner.agent.md`（v2.3.0，1004 行） | ~530 行（-474） | ✂️ 瘦身 |
-| `story-splitter.agent.md` | `../story-splitter.agent.md`（v2.0.0，440 行） | ~290 行（-150）| ✂️ 瘦身 + 修复 |
-| `eng-reviewer.agent.md` | `../eng-reviewer.agent.md`（v2.0.0，414 行） | ~430 行（+16） | 📈 增强 |
-
-**总变化**：净减 **~711 行**，重复内容降为单一来源。
+> BCChina 产品研发一体化 Agent 框架  
+> 更新时间：2026-05-02
 
 ---
 
-## 二、本次假设的 5 个决策默认值
+## 仓库定位
 
-由于你还没确认决策点，V2 文件采用了我推荐的默认值。如需调整请告诉我，我修改对应文件即可。
-
-| # | 决策 | 默认值 | 影响文件 |
-|---|------|--------|---------|
-| 1 | 编号体系 | **A/B/C 跨章节锚点 + ①②③④⑤ 章节内序号** 混合 | SKILL.md §2 表格 |
-| 2 | instructions 保留范围 | 按方案 3.2 列表（保留文件级 contract，删 agent 行为细节） | product.instructions.md 全文 |
-| 3 | 依赖加载位置 | **Step 0「依赖加载」前置**（确定性更高） | product-planner.agent.md「在执行任何任务前」第 3 条 |
-| 4 | eng-reviewer AC 合规校验 | **加入 Section 17.0 强制阻塞性校验** | eng-reviewer.agent.md Section 17.0 |
-| 5 | 版本号策略 | **3 个 agent 一起升 minor**（v2.4.0 / v2.1.0 / v2.1.0），SKILL 起始 v1.0.0 | 各 agent frontmatter |
+本仓库管理 BCChina 从**产品规划 → UX 设计 → 工程评审 → 任务拆分 → Wiki 发布**的全流程 AI Agent 协作体系。所有 Agent 遵循 `.github/copilot-instructions.md` 全局规则，通过 handoff 机制串联。
 
 ---
 
-## 三、关键改动 highlights
-
-### 🎯 改动 1：AC 规则单一来源
-
-**Before**：3 个 agent 各自维护 AC 规则，story-splitter 还在用旧的连写格式。
-
-**After**：
-- `skills/ac-writing-spec/SKILL.md` 是唯一权威（290 行）
-- product-planner / story-splitter / eng-reviewer 都通过 `Read` 引用同一份
-- story-splitter B-3 旧格式（`WHEN A 或 B → THEN C` / `AND WHEN`）已彻底修复为多行新格式
-
-### 🎯 改动 2：instructions 与 agent 重复消除
-
-**Before**：`product.instructions.md` 的 PRD 结构、AC 规范、禁止事项与 `product-planner.agent.md` 大量重复（约 200 行重复内容）。
-
-**After**：
-- instructions 只保留**文件级 contract**（什么是合格的 PRD 文档）
-- agent 只保留**行为流程**（Mode A/B/C / Step 0-11 / Quality Gate / Rule Sedimentation）
-- AC 详情完全移到 SKILL
-- instructions 末尾新增 §8「不在本文件范围」明确指向其他文件
-
-### 🎯 改动 3：编号体系统一
-
-**Before**：
-- product-planner 用 `①②③④⑤`（仅章节内可读）
-- story-splitter 用 `A-1 / A-2 / B-3 / C-1`（跨章节追溯）
-- 同一规则两套编号，沟通混乱
-
-**After**：
-- A/B/C 编号作为跨章节追溯锚点（A 类操作覆盖 / B 类字段状态 / C 类业务约定）
-- ①②③④⑤ 仅作为同一章节内的可读性序号
-- 两者并存互不冲突
-
-### 🎯 改动 4：eng-reviewer 升级为 AC 质量哑评审 → 强校验
-
-**Before**：eng-reviewer 没有 AC 标准，会被动接收不合规 AC 并继续工程评审。
-
-**After**：
-- 新增 Section 17.0 AC 合规校验（强制阻塞性）
-- 检查格式 / 覆盖 / 强制规则三大维度
-- 不合规必须 flag 到 Section 15 Risks，建议 PM 让 Product Planner 重跑 Quality Gate
-
-### 🎯 改动 5：Copilot 加载链路明确化
-
-由于 Copilot 不支持 SKILL description 自动触发，三个 agent 都在「执行前规则」加了**强制 Read 语句**：
+## Agent 工作流总览
 
 ```
-强制依赖加载（不可跳过）：必须先 Read：
-- PM agents/skills/ac-writing-spec/SKILL.md
-- ...
+                    ┌─────────────────────┐
+                    │  Knowledge Retriever │  ← Epic Kickoff 时调用一次
+                    │  搜索 ADO Wiki 历史   │
+                    │  生成 context-memo.md │
+                    └────────┬────────────┘
+                             │ handoff（memo 文件共享）
+          ┌──────────────────┼──────────────────┐
+          ▼                  ▼                  ▼
+   Product Planner    UX Prototyper       Eng Reviewer
+          │
+          ▼
+┌──────────────────────────────────────────────────┐
+│  Product Planner  (v2.4.0)                       │
+│                                                  │
+│  1. Read SKILL §1-§5 + Rules/{project}-rules.md │
+│  2. 写 AC → PRD 落盘 PRD/{project}/{epic}.md    │
+│  3. FCS > 10? ──→ Story Splitter (sub-agent)    │
+│     │              Read SKILL → 写 AC            │
+│     │              返回 Stories                   │
+│     ▼                                            │
+│  4. 整合 Story                                   │
+│  5. Quality Gate 10.5（SKILL §1/§2/§3 自检）     │
+│  6. Step 11 规则沉淀 → Rules/{project}-rules.md │
+└──┬───────────────┬───────────────────────────────┘
+   │ handoff       │ handoff
+   ▼               ▼
+┌────────────┐  ┌──────────────────────────────────┐
+│ UX Proto-  │  │  Eng Reviewer  (v2.1.0)          │
+│ typer      │  │                                  │
+│ (v2.0.0)   │  │  Read SKILL §1/§2/§3             │
+│            │  │  Section 17.0 AC 合规校验（阻塞） │
+│ HTML +     │  │  输出 Engineering Review          │
+│ UX.md      │  │                                  │
+└──┬─────┬───┘  └──┬───────────────┬───────────────┘
+   │     │         │ handoff       │ handoff
+   │     │         ▼               ▼
+   │     │  ┌────────────┐  ┌──────────────┐
+   │     │  │ Task       │  │              │
+   │     │  │ Planner    │  │              │
+   │     │  │ 任务拆分    │  │              │
+   │     │  └─────┬──────┘  │              │
+   │     │        │         │              │
+   ▼     ▼        ▼         ▼              │
+┌─────────────────────────────────────┐    │
+│        Wiki Publisher  (v2.0.0)     │◄───┘
+│                                     │
+│  ADO Wiki 路径：                     │
+│  /{epic-name}/                      │  ← PRD
+│  /{epic-name}/ui-prototype          │  ← UX
+│  /{epic-name}/engineering-review    │  ← Eng Review
+│  /{epic-name}/task-planning         │  ← Task Plan
+└─────────────────────────────────────┘
 ```
 
 ---
 
-## 四、Diff 摘要（按文件）
+## Agent 清单
 
-### 📄 product-planner.agent.md（v2.3.0 → v2.4.0）
+| Agent | 版本 | 职责 | 子 Agent | Handoff 目标 |
+|-------|------|------|----------|-------------|
+| **Knowledge Retriever** | — | Epic Kickoff 时检索 ADO Wiki 历史，生成 `context-memo.md` | — | Product Planner / UX Prototyper / Eng Reviewer |
+| **Product Planner** | v2.4.0 | PRD 编写、AC 生成、PRD 落盘、规则沉淀 | Story Splitter | UX Prototyper / Eng Reviewer / Wiki Publisher |
+| **Story Splitter** | v2.1.0 | Feature 复杂度评估 (FCS)、Story 拆分与 AC 补全 | — | （返回 Product Planner） |
+| **UX Prototyper** | v2.0.0 | UX 文档 + HTML 原型生成 | — | Eng Reviewer / Wiki Publisher |
+| **Eng Reviewer** | v2.1.0 | 工程评审、AC 合规校验 (§17.0)、技术方案 | — | Task Planner / Wiki Publisher |
+| **Task Planner** | — | 任务拆分、估算、依赖识别 | — | Wiki Publisher |
+| **Wiki Publisher** | v2.0.0 | 文档类型识别、Wiki 路径生成、ADO Wiki 发布 | — | — |
 
-**删除（约 470 行）**：
-- AC 格式强制规范（约 50 行）→ 移到 SKILL §1
-- AC 覆盖规范（操作类 5 类 + 列表类 7 类，约 80 行）→ 移到 SKILL §2
-- AC 额外强制规则（状态机 / 按钮置灰 / 表单校验，约 60 行）→ 移到 SKILL §3
-- AC 自主补全分级（约 100 行）→ 移到 SKILL §5
-- 与 instructions 重复的 PRD 结构详细描述（约 100 行）→ instructions 已有
-- 通用禁止事项重复部分（约 30 行）→ instructions 已有
-- 估算映射表的冗余说明（约 50 行）→ 保留表格，删重复说明
+---
 
-**新增（约 30 行）**：
-- 「在执行任何任务前」第 3 条：强制依赖加载
-- Step 6 引用 SKILL §1-§5
-- Step 10.5 Quality Gate 引用 SKILL §1
-- 输出结构 §7 末尾 SKILL 引用
-- 强制规则末尾 instructions 引用
+## 核心设计决策
 
-### 📄 story-splitter.agent.md（v2.0.0 → v2.1.0）
+| # | 决策 | 说明 |
+|---|------|------|
+| 1 | AC 规则单一来源 | `skills/ac-writing-spec/SKILL.md` 为唯一权威；Product Planner / Story Splitter / Eng Reviewer 均通过强制 Read 引用 |
+| 2 | instructions 与 agent 职责分离 | `product.instructions.md` 只定义文件级 contract（PRD 合格标准）；agent 定义行为流程 |
+| 3 | 编号体系 | A/B/C 跨章节锚点 + ①②③④⑤ 章节内序号混合 |
+| 4 | Eng Reviewer AC 强校验 | Section 17.0 强制阻塞性校验，不合规 → flag 到 Risks |
+| 5 | 强制依赖加载 | 三个 agent 均在 Step 0 前置 Read SKILL，确保 Copilot 加载链路确定性 |
+| 6 | context-memo 共享 | Knowledge Retriever 仅 Epic 启动调用一次，后续 Agent 读文件而非重复查询 ADO |
 
-**删除（约 160 行）**：
-- AC 分类写法强制规范（A 类 + B 类约定，约 70 行）→ 移到 SKILL §2
-- AC 写法模板（约 60 行）→ 移到 SKILL §4
-- 状态机强制覆盖规则 C-1（约 10 行）→ 移到 SKILL §3.1
-- **按钮置灰规则强制覆盖 B-3 旧版连写格式**（约 15 行）→ **修复后**移到 SKILL §3.2 多行新格式
+---
 
-**新增（约 10 行）**：
-- 「执行前规则」第 4 条：强制依赖加载
-- 「AC 写作规范引用」表格指向 SKILL §1-§5
-- 质量检查清单引用 SKILL 章节锚点
-- 禁止事项加 3 条新限制
-- 版本变更记录
+## 文件结构
 
-### 📄 eng-reviewer.agent.md（v2.0.0 → v2.1.0）
+```
+.github/
+  copilot-instructions.md          ← 全局规则（最高优先级）
+  agents/
+    product-planner.agent.md       ← PRD 生成
+    story-splitter.agent.md        ← Story 拆分（Product Planner 子 Agent）
+    ux-prototyper.agent.md         ← UX/UI 设计 + HTML 原型
+    eng-reviewer.agent.md          ← 工程评审 + AC 合规
+    task-planner.agent.md          ← 任务拆分与估算
+    wiki-publisher.agent.md        ← ADO Wiki 发布
+    knowledge-retriever.agent.md   ← Epic Kickoff 历史知识检索
+  instructions/
+    product.instructions.md        ← PRD 文件级 contract
+    engineering.instructions.md    ← 工程设计规范
+    frontend.instructions.md       ← 前端/UI 规范
+skills/
+  ac-writing-spec/SKILL.md         ← AC 写作规范（唯一权威）
+  claud-frontend/SKILL.md          ← 前端 UI 生成能力
+  premium-frontend-ui/SKILL.md     ← 设计规范能力
+PRD/                               ← PRD 落盘目录
+  {project}/{epic-slug}.md
+Rules/                             ← 规则沉淀目录
+  {project}-rules.md
+UI/                                ← HTML 原型文件
+docs/                              ← UX / Engineering Review 等文档
+context-memo.md                    ← Epic 级历史知识缓存（Knowledge Retriever 生成）
+```
 
-**新增（约 16 行净增）**：
-- 「执行前规则」第 7 条：强制 Read SKILL
-- 工作方式新增 Step 8 AC 合规校验
-- **Section 17.0 AC 合规校验**（强制阻塞性，约 80 行）
-- 强制规则与禁止事项各加 2 条
-- 版本变更记录
+---
 
-### 📄 instructions/product.instructions.md（瘦身）
+## 指令优先级
 
-**删除（约 220 行）**：
-- BCChina 详细系统语境
-- PRD 章节展开内容（agent 自带）
-- 详细 AC 规范（移到 SKILL）
-- Copilot 输出要求
-- 默认输出风格
+1. 用户当前明确要求
+2. `.github/copilot-instructions.md`（全局规则）
+3. `.github/instructions/*.instructions.md`（局部规则）
+4. `.github/agents/*.agent.md`（角色规则）
+5. `skills/` 内部说明
 
-**保留**（重写为简洁版）：
-- 输出语言规则
-- Epic / Feature / Story 层级
-- AC 基础要求 + SKILL 引用
-- PRD 必含章节骨架（仅标题）
-- 总体产品原则
-- 通用禁止事项
+---
+
+## Wiki 发布路径
+
+| 文档类型 | Wiki 路径 | 发布 Agent |
+|---------|----------|-----------|
+| PRD | `/{epic-name}/` | Wiki Publisher |
+| UX 文档 | `/{epic-name}/ui-prototype` | Wiki Publisher |
+| Engineering Review | `/{epic-name}/engineering-review` | Wiki Publisher |
+| Task Planning | `/{epic-name}/task-planning` | Wiki Publisher |
+
+---
+
+## 版本记录
+
+| 日期 | 变更 |
+|------|------|
+| 2026-05-02 | README 重写为工作流架构文档，反映 V2 agent 体系实际状态 |
+| 2026-04-28 | V2 重构：AC 规则抽象到 SKILL、instructions 瘦身、Eng Reviewer 增加 §17.0 合规校验 |
+| 2026-04-16 | 初始 Agent 体系建立（Product Planner / UX Prototyper / Eng Reviewer / Wiki Publisher） |
 - 「不在本文件范围」对照表
 
 ---

@@ -82,11 +82,10 @@ PRD 必须包含以下章节（详细要求见各 agent 的输出结构定义）
 - GWT Scenarios（top 3-5，覆盖 happy / failure / edge cases）
 - Roadmap with Phases（MVP / Phase 2 / Future Extension）
 
-### S3 — 用户与系统
+### S3 — 用户旅程
 - User Journey Map（persona / stages / emotions / pain points）
-- System Interaction Flow（user → channel → gateway → services → data）
-- Service Boundary Table（Owns / Does NOT Own / 外部依赖）
-- Key Technical Decisions（产品视角：sync/async / queue / external providers）
+
+> ⚠️ System Interaction Flow、Service Boundary Table、Key Technical Decisions 不在 PRD 范围内，由 Eng Reviewer 在工程评审阶段产出（见 `eng-reviewer.agent.md` Section 5-7）。
 
 ### S4 — 非功能与扩展
 - Non-functional Requirements（performance / compatibility / availability / retry / security / observability / data limits）
