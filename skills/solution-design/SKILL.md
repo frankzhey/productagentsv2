@@ -1,8 +1,8 @@
 ---
 name: solution-design
-description: Solution Brief 写作规范——Stable Feature ID / Feature List 表格 / Journey 三栏 / Process Flow 标准 / GWT Top 5 / T-shirt Workload 映射 / Tech high-level 四段式 / Story List 预览。Plan 阶段产出 Solution Brief 时必须 Read 本文件。
+description: Solution Brief 写作规范——Stable Feature ID / Feature List 表格 / Journey 三栏 / Process Flow 标准 / GWT Top 5 / T-shirt Workload 映射 / Tech high-level 四段式 / 复杂系统图发布级 SVG/PNG / Story List 预览。Plan 阶段产出 Solution Brief 时必须 Read 本文件。
 version: 1.0.0
-updated: 2026-05-08
+updated: 2026-05-12
 maintainer: @frankzhey
 applies-to: [solution-architect]
 ---
@@ -203,6 +203,48 @@ AND 用户可点击 `Confirm Pass` 完成复核
 ```
 
 **强制要求**：四段全部输出（即使某段简短也保留区块）
+
+### 发布级技术图生成规则（复杂边界 / 评审产出）
+
+当 Solution Brief 命中以下任一场景时，必须调用 `fireworks-tech-graph` 生成发布级 SVG/PNG 技术图，作为工程评审和 Wiki 发布附件：
+
+**前置条件**：本仓库已引入独立 Skill `skills/fireworks-tech-graph/SKILL.md`。触发出图时必须先 Read 该文件；若需要 Claude 风格细节，继续 Read `skills/fireworks-tech-graph/references/style-6-claude-official.md`。
+
+- 存在复杂系统边界：多系统协作、Mini program + backend、3Ups website + backend、AI scoring service、外部依赖、异步回调、队列、结果回传、跨服务状态流转
+- 进入 Engineering Review / 跨团队评审产出阶段，需要给研发、测试、运维或业务方使用可发布图形
+- §7 Tech High-level 中仅 Mermaid / ASCII 无法清晰表达 layered architecture、data flow、sequence 或 component ownership
+
+**必须优先生成的图类型**：
+- `layered architecture`：表达用户入口、渠道层、BFF/API gateway、应用服务、数据存储、外部依赖、异步链路
+- `data flow`：表达上传、评分、回调、结果查询、日志/trace 数据在系统间的流动
+- `sequence`：表达 2–5 个关键交互链路，至少覆盖 happy path、failure path、edge case（如适用）
+- `component diagram`：表达组件职责、归属服务、同步/异步边界、依赖方向
+
+**默认风格**：Claude 风格（`fireworks-tech-graph` Style 6 / Claude Official），用于保持评审材料克制、清晰、可发布。
+
+**调用步骤**：
+1. Read `skills/fireworks-tech-graph/SKILL.md`
+2. Read `skills/fireworks-tech-graph/references/style-6-claude-official.md`
+3. 根据当前 Solution Brief 的 §7 Tech High-level 提取 layers、components、data flows、sequence scenarios
+4. 生成 SVG，并按 `fireworks-tech-graph` 要求校验与导出 PNG
+5. 将 SVG/PNG 路径回写到 Solution Brief 的 §7 `架构图` 或 `Service Interaction Flow`
+
+**输出路径**：
+
+```text
+project/{project}/solution/Engdesign/[epic]-engdesign/
+```
+
+**文件命名建议**：
+- `[epic]-layered-architecture.svg` / `[epic]-layered-architecture.png`
+- `[epic]-data-flow.svg` / `[epic]-data-flow.png`
+- `[epic]-sequence-[scenario].svg` / `[epic]-sequence-[scenario].png`
+- `[epic]-component-diagram.svg` / `[epic]-component-diagram.png`
+
+**文档内引用要求**：
+- Solution Brief 仍需保留 §7 四段式文字内容，发布级 SVG/PNG 不能替代组件职责、Service Interaction Flow 和 ADR 描述
+- 在 §7 `架构图` 或 `Service Interaction Flow` 下补充生成图路径，便于 Wiki Publisher 上传或引用
+- 如果评审阶段尚未实际生成图片，必须写明 `Diagram Output: pending generation via fireworks-tech-graph`，不得假装已生成
 
 ---
 
