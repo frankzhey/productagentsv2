@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 840" width="1200" height="840" role="img" aria-labelledby="title desc">
+  <title id="title">Speaking Challenge and Scoring - Sequence Happy Path</title>
+  <desc id="desc">Happy path sequence from challenge entry to audio upload, scoring task creation, short polling, result display, and website handoff.</desc>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+    .title { font-size: 24px; font-weight: 700; fill: #1a1a1a; }
+    .subtitle { font-size: 13px; fill: #6a6a6a; }
+    .part-title { font-size: 13px; font-weight: 700; fill: #1a1a1a; }
+    .part-sub { font-size: 11px; fill: #4f4f4f; }
+    .msg { font-size: 12px; fill: #5a5a5a; }
+    .lifeline { stroke: #8a8a8a; stroke-width: 1.4; stroke-dasharray: 5 5; }
+    .message { stroke: #5a5a5a; stroke-width: 2; marker-end: url(#arrow); }
+    .return { stroke: #5a5a5a; stroke-width: 1.8; stroke-dasharray: 5 4; marker-end: url(#arrow); }
+    .note { font-size: 12px; fill: #5a5a5a; }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/></marker>
+    <filter id="shadow-soft"><feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#000000" flood-opacity="0.08"/></filter>
+  </defs>
+  <rect width="1200" height="840" fill="#f8f6f3"/>
+  <text x="600" y="38" text-anchor="middle" class="title">Speaking Challenge and Scoring - Sequence Happy Path</text>
+  <text x="600" y="60" text-anchor="middle" class="subtitle">MVP uses upload-then-task and short polling; website receives source and score bucket only.</text>
+
+  <g id="participants">
+    <rect x="55" y="90" width="130" height="58" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="120" y="113" text-anchor="middle" class="part-title">User</text><text x="120" y="132" text-anchor="middle" class="part-sub">P1 candidate</text>
+    <rect x="235" y="90" width="130" height="58" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="300" y="113" text-anchor="middle" class="part-title">Mini Program</text><text x="300" y="132" text-anchor="middle" class="part-sub">recorder + result</text>
+    <rect x="415" y="90" width="130" height="58" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="480" y="113" text-anchor="middle" class="part-title">Challenge BFF</text><text x="480" y="132" text-anchor="middle" class="part-sub">topic/status</text>
+    <rect x="595" y="90" width="130" height="58" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="660" y="113" text-anchor="middle" class="part-title">Upload Gateway</text><text x="660" y="132" text-anchor="middle" class="part-sub">validate audio</text>
+    <rect x="775" y="90" width="130" height="58" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="840" y="113" text-anchor="middle" class="part-title">Scoring Job</text><text x="840" y="132" text-anchor="middle" class="part-sub">idempotent task</text>
+    <rect x="955" y="90" width="130" height="58" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2" filter="url(#shadow-soft)"/>
+    <text x="1020" y="113" text-anchor="middle" class="part-title">AI + Mapping</text><text x="1020" y="132" text-anchor="middle" class="part-sub">score + CEFR</text>
+  </g>
+
+  <line x1="120" y1="148" x2="120" y2="770" class="lifeline"/>
+  <line x1="300" y1="148" x2="300" y2="770" class="lifeline"/>
+  <line x1="480" y1="148" x2="480" y2="770" class="lifeline"/>
+  <line x1="660" y1="148" x2="660" y2="770" class="lifeline"/>
+  <line x1="840" y1="148" x2="840" y2="770" class="lifeline"/>
+  <line x1="1020" y1="148" x2="1020" y2="770" class="lifeline"/>
+
+  <line x1="120" y1="190" x2="300" y2="190" class="message"/><text x="150" y="181" class="msg">open challenge</text>
+  <line x1="300" y1="230" x2="480" y2="230" class="message"/><text x="325" y="221" class="msg">GET topic metadata</text>
+  <line x1="480" y1="270" x2="300" y2="270" class="return"/><text x="330" y="262" class="msg">topic + consent copy</text>
+  <line x1="120" y1="315" x2="300" y2="315" class="message"/><text x="150" y="306" class="msg">record and submit</text>
+  <line x1="300" y1="360" x2="660" y2="360" class="message"/><text x="405" y="351" class="msg">POST audio(file, topicId)</text>
+  <line x1="660" y1="400" x2="660" y2="445" class="message"/><text x="674" y="425" class="msg">validate duration + format</text>
+  <line x1="660" y1="475" x2="840" y2="475" class="message"/><text x="690" y="466" class="msg">createTask(idempotencyKey)</text>
+  <line x1="840" y1="515" x2="1020" y2="515" class="message"/><text x="875" y="506" class="msg">score(audioUrl, rubric)</text>
+  <line x1="1020" y1="555" x2="840" y2="555" class="return"/><text x="875" y="547" class="msg">dimensions + raw score</text>
+  <line x1="840" y1="595" x2="300" y2="595" class="return"/><text x="485" y="587" class="msg">taskId + processing</text>
+  <line x1="300" y1="635" x2="840" y2="635" class="message"/><text x="500" y="626" class="msg">poll task status</text>
+  <line x1="840" y1="675" x2="300" y2="675" class="return"/><text x="455" y="667" class="msg">band + CEFR + advice + disclaimer</text>
+  <line x1="120" y1="720" x2="300" y2="720" class="message"/><text x="150" y="711" class="msg">tap website CTA</text>
+  <line x1="300" y1="760" x2="480" y2="760" class="message"/><text x="325" y="751" class="msg">track handoff(source, bucket)</text>
+
+  <rect x="735" y="690" width="330" height="54" rx="10" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="753" y="712" class="note">Note: raw sensitive score stays in scoring domain.</text>
+  <text x="753" y="731" class="note">Website handoff receives source scenario and score bucket.</text>
+</svg>

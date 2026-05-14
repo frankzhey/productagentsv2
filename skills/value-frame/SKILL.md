@@ -1,8 +1,8 @@
 ---
 name: value-frame
-description: Value Frame 写作规范——Brief 五要素 / Hypothesis 假设格式 / KPI Tree 三类要求 / Roadmap+Epic 列表结构 / Open Questions 状态分类。Discovery 阶段产出 Value Frame 时必须 Read 本文件。
-version: 1.0.0
-updated: 2026-05-08
+description: Value Frame 写作规范——Brief 六要素（含"为什么是我们做"）/ Hypothesis 假设格式 / KPI Tree 三类要求 / Roadmap+Epic 列表结构 / Open Questions 状态分类。Discovery 阶段产出 Value Frame 时必须 Read 本文件。
+version: 1.1.0
+updated: 2026-05-14
 maintainer: @frankzhey
 applies-to: [value-architect]
 ---
@@ -20,7 +20,7 @@ applies-to: [value-architect]
 | § | 章节 | 强制 / 可选 |
 |---|---|---|
 | §0 | 调研 Summary 索引 | 仅 Mode 2 必填；Mode 1 跳过 |
-| §1 | Brief（5 要素） | ✅ 必须 |
+| §1 | Brief（6 要素，含"为什么是我们做"） | ✅ 必须 |
 | §2 | Value Hypothesis（≥3 条） | ✅ 必须 |
 | §3 | KPI Tree（≥1 North Star + ≥1 Guardrail） | ✅ 必须 |
 | §4 | Roadmap with Phases（含 Epic 列表） | ✅ 必须 |
@@ -30,19 +30,21 @@ applies-to: [value-architect]
 
 ---
 
-## §2 Brief 五要素（强制）
+## §2 Brief 六要素（强制）
 
 ```
 ## §1 Brief
 
 - **背景**：[业务 / 市场 / 内部环境，≥50 字]
 - **当前问题**：[用户 / 业务 / 运营具体痛点，≥3 条]
+- **为什么是我们做**：[我方在能力 / 数据 / 渠道 / 业务位置上的不可替代性 — 相对竞品的差异化，必须具体；来自 Value Architect Gate 2 Q2 答案]
 - **为什么现在做**：[时机 / 风口 / 资源 / 战略对齐 — 必须具体]
 - **目标用户**：[1–3 类核心角色 + 简短描述]
 - **业务价值**：[直接业务收益 — 收入 / 成本 / 体验 / 合规]
 ```
 
 **强制要求**：
+- "为什么是我们做"必须给出不可替代的具体依据（如"在 IELTS 测评有 X 年运营数据 / 拥有 Y 渠道独占接入 / 已有 Z 系统沉淀"），**禁止**写"团队经验丰富" / "我们更专业"等空话
 - "为什么现在做"必须具体（不能写"用户体验差"这类空话），需要含时机依据（如"3Ups 上线带来流量入口" / "Q2 战略立项" / "竞品 X 已抢先 6 个月"）
 - "目标用户"必须用具体角色名，不能用"所有用户"
 - "业务价值"必须可衡量（指向某个 KPI 或业务指标）
@@ -238,7 +240,7 @@ Read skills/value-frame/SKILL.md
 ## §9 强制规则
 
 必须：
-- §1 Brief 五要素全部具体化（禁空话）
+- §1 Brief 六要素全部具体化（禁空话），尤其"为什么是我们做"必须给出不可替代的具体依据
 - §2 Hypothesis ≥3 条，含完整"如果...则...因为..."格式 + 用户价值 + 业务价值 + 验证信号
 - §3 KPI Tree ≥1 North Star + ≥1 Guardrail，每个有 ID + Target + Definition
 - §4 Roadmap 每 Epic 是 kebab-case + ≤30 字描述 + ≥1 KPI 对齐

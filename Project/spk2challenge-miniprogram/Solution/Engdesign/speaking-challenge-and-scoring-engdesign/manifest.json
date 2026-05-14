@@ -1,0 +1,33 @@
+{
+  "project": "spk2challenge-miniprogram",
+  "epic": "speaking-challenge-and-scoring",
+  "style": "fireworks-tech-graph style 6 claude official",
+  "sourceSkill": "skills/fireworks-tech-graph/SKILL.md",
+  "styleReference": "skills/fireworks-tech-graph/references/style-6-claude-official.md",
+  "assets": [
+    {
+      "type": "layered architecture",
+      "svg": "speaking-challenge-and-scoring-layered-architecture.svg",
+      "png": "speaking-challenge-and-scoring-layered-architecture.png",
+      "pngStatus": "pending"
+    },
+    {
+      "type": "data flow",
+      "svg": "speaking-challenge-and-scoring-data-flow.svg",
+      "png": "speaking-challenge-and-scoring-data-flow.png",
+      "pngStatus": "pending"
+    },
+    {
+      "type": "sequence",
+      "svg": "speaking-challenge-and-scoring-sequence-happy-path.svg",
+      "png": "speaking-challenge-and-scoring-sequence-happy-path.png",
+      "pngStatus": "pending"
+    },
+    {
+      "type": "component diagram",
+      "svg": "speaking-challenge-and-scoring-component-diagram.svg",
+      "png": "speaking-challenge-and-scoring-component-diagram.png",
+      "pngStatus": "pending"
+    }
+  ]
+}
